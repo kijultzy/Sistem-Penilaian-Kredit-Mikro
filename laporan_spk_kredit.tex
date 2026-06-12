@@ -232,7 +232,7 @@ Batasan masalah yang ditetapkan adalah sebagai berikut.
   \item Keputusan akhir kelayakan kredit sepenuhnya ditentukan
         oleh mesin inferensi fuzzy; prediksi ML dan DL bersifat
         informasi pendukung saja.
-  \item Basis aturan dibatasi 22 aturan \textit{IF-THEN}.
+  \item Basis aturan dibatasi 34 aturan \textit{IF-THEN}.
 \end{enumerate}
 
 % ============================================================
@@ -270,7 +270,7 @@ atas, memerlukan empat parameter $(a, b, c, d)$:
 \begin{equation}
   \mu_{\mathrm{trap}}(x;\,a,b,c,d) =
   \begin{cases}
-    0                        & x \le a \;\text{atau}\; x \ge d \\[4pt]
+    0                        & x < a \;\text{atau}\; x > d \\[4pt]
     \dfrac{x-a}{b-a}         & a < x < b \\[6pt]
     1                        & b \le x \le c \\[6pt]
     \dfrac{d-x}{d-c}         & c < x < d
@@ -474,13 +474,13 @@ keanggotaan untuk dua variabel representatif.
 
 \section{Basis Aturan}
 
-Sistem menggunakan 22 aturan \textit{IF-THEN} dengan operator
+Sistem menggunakan 34 aturan \textit{IF-THEN} dengan operator
 \texttt{AND} (nilai minimum). Tabel~\ref{tab:rule_base}
 merangkum seluruh aturan.
 
 \begin{table}[H]
   \centering
-  \caption{Matriks 22 Basis Aturan Fuzzy}
+  \caption{Matriks 34 Basis Aturan Fuzzy}
   \label{tab:rule_base}
   \renewcommand{\arraystretch}{1.1}
   \small
@@ -496,6 +496,8 @@ merangkum seluruh aturan.
     R04 & Tinggi & Sedikit & Tinggi & Sedang  & Jarang    & \textbf{Baik} \\ \hline
     R16 & Sedang & Sedikit & Sedang & Singkat & Jarang    & \textbf{Baik} \\ \hline
     R17 & Tinggi & Sedang  & Rendah & Singkat & Jarang    & \textbf{Baik} \\ \hline
+    R23 & Tinggi & Sedikit & Sedang & Singkat & Jarang    & \textbf{Baik} \\ \hline
+    R24 & Sedang & Sedang  & Rendah & Singkat & Jarang    & \textbf{Baik} \\ \hline
     R05 & Sedang & Sedang  & Sedang & Sedang  & Sering    & \textbf{Standar} \\ \hline
     R06 & Rendah & Sedikit & Rendah & Singkat & Jarang    & \textbf{Standar} \\ \hline
     R07 & Tinggi & Banyak  & Sedang & Singkat & Jarang    & \textbf{Standar} \\ \hline
@@ -505,6 +507,8 @@ merangkum seluruh aturan.
     R18 & Sedang & Sedang  & Sedang & Singkat & Jarang    & \textbf{Standar} \\ \hline
     R19 & Rendah & Sedikit & Sedang & Singkat & Jarang    & \textbf{Standar} \\ \hline
     R20 & Sedang & Sedang  & Tinggi & Singkat & Jarang    & \textbf{Standar} \\ \hline
+    R33 & Sedang & Sedikit & Sedang & Singkat & Sering    & \textbf{Standar} \\ \hline
+    R34 & Tinggi & Sedikit & Sedang & Singkat & Sering    & \textbf{Standar} \\ \hline
     R11 & Rendah & Banyak  & Tinggi & Lama    & Sgt.Sering & \textbf{Buruk} \\ \hline
     R12 & Tinggi & Banyak  & Tinggi & Lama    & Sgt.Sering & \textbf{Buruk} \\ \hline
     R13 & Sedang & Banyak  & Sedang & Sedang  & Sering    & \textbf{Buruk} \\ \hline
@@ -512,6 +516,14 @@ merangkum seluruh aturan.
     R15 & Sedang & Sedikit & Tinggi & Lama    & Sgt.Sering & \textbf{Buruk} \\ \hline
     R21 & Rendah & Sedang  & Tinggi & Sedang  & Sering    & \textbf{Buruk} \\ \hline
     R22 & Sedang & Banyak  & Tinggi & Lama    & Sering    & \textbf{Buruk} \\ \hline
+    R25 & Rendah & Sedang  & Tinggi & Lama    & Sering    & \textbf{Buruk} \\ \hline
+    R26 & Sedang & Sedang  & Tinggi & Sedang  & Sgt.Sering & \textbf{Buruk} \\ \hline
+    R27 & Sedang & Sedang  & Tinggi & Lama    & Sgt.Sering & \textbf{Buruk} \\ \hline
+    R28 & Sedang & Sedang  & Tinggi & Sedang  & Sering    & \textbf{Buruk} \\ \hline
+    R29 & Rendah & Sedang  & Tinggi & Lama    & Jarang    & \textbf{Buruk} \\ \hline
+    R30 & Rendah & Sedang  & Tinggi & Singkat & Sering    & \textbf{Buruk} \\ \hline
+    R31 & Rendah & Sedikit & Tinggi & Lama    & Sering    & \textbf{Buruk} \\ \hline
+    R32 & Sedang & Sedang  & Sedang & Lama    & Sgt.Sering & \textbf{Buruk} \\ \hline
   \end{tabular}
 \end{table}
 
@@ -525,6 +537,8 @@ merangkum seluruh aturan.
   \item[R04] \textit{IF} Gaji Tinggi \textit{AND} Hutang Sedikit \textit{AND} Bunga Tinggi \textit{AND} Jeda Sedang \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Baik}
   \item[R16] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedikit \textit{AND} Bunga Sedang \textit{AND} Jeda Singkat \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Baik}
   \item[R17] \textit{IF} Gaji Tinggi \textit{AND} Hutang Sedang \textit{AND} Bunga Rendah \textit{AND} Jeda Singkat \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Baik}
+  \item[R23] \textit{IF} Gaji Tinggi \textit{AND} Hutang Sedikit \textit{AND} Bunga Sedang \textit{AND} Jeda Singkat \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Baik}
+  \item[R24] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedang \textit{AND} Bunga Rendah \textit{AND} Jeda Singkat \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Baik}
 \end{itemize}
 
 \vspace{4pt}
@@ -539,6 +553,8 @@ merangkum seluruh aturan.
   \item[R18] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedang \textit{AND} Bunga Sedang \textit{AND} Jeda Singkat \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Standar}
   \item[R19] \textit{IF} Gaji Rendah \textit{AND} Hutang Sedikit \textit{AND} Bunga Sedang \textit{AND} Jeda Singkat \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Standar}
   \item[R20] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedang \textit{AND} Bunga Tinggi \textit{AND} Jeda Singkat \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Standar}
+  \item[R33] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedikit \textit{AND} Bunga Sedang \textit{AND} Jeda Singkat \textit{AND} Frekuensi Sering \textit{THEN} Skor \textbf{Standar}
+  \item[R34] \textit{IF} Gaji Tinggi \textit{AND} Hutang Sedikit \textit{AND} Bunga Sedang \textit{AND} Jeda Singkat \textit{AND} Frekuensi Sering \textit{THEN} Skor \textbf{Standar}
 \end{itemize}
 
 \vspace{4pt}
@@ -551,6 +567,14 @@ merangkum seluruh aturan.
   \item[R15] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedikit \textit{AND} Bunga Tinggi \textit{AND} Jeda Lama \textit{AND} Frekuensi Sgt.Sering \textit{THEN} Skor \textbf{Buruk}
   \item[R21] \textit{IF} Gaji Rendah \textit{AND} Hutang Sedang \textit{AND} Bunga Tinggi \textit{AND} Jeda Sedang \textit{AND} Frekuensi Sering \textit{THEN} Skor \textbf{Buruk}
   \item[R22] \textit{IF} Gaji Sedang \textit{AND} Hutang Banyak \textit{AND} Bunga Tinggi \textit{AND} Jeda Lama \textit{AND} Frekuensi Sering \textit{THEN} Skor \textbf{Buruk}
+  \item[R25] \textit{IF} Gaji Rendah \textit{AND} Hutang Sedang \textit{AND} Bunga Tinggi \textit{AND} Jeda Lama \textit{AND} Frekuensi Sering \textit{THEN} Skor \textbf{Buruk}
+  \item[R26] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedang \textit{AND} Bunga Tinggi \textit{AND} Jeda Sedang \textit{AND} Frekuensi Sgt.Sering \textit{THEN} Skor \textbf{Buruk}
+  \item[R27] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedang \textit{AND} Bunga Tinggi \textit{AND} Jeda Lama \textit{AND} Frekuensi Sgt.Sering \textit{THEN} Skor \textbf{Buruk}
+  \item[R28] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedang \textit{AND} Bunga Tinggi \textit{AND} Jeda Sedang \textit{AND} Frekuensi Sering \textit{THEN} Skor \textbf{Buruk}
+  \item[R29] \textit{IF} Gaji Rendah \textit{AND} Hutang Sedang \textit{AND} Bunga Tinggi \textit{AND} Jeda Lama \textit{AND} Frekuensi Jarang \textit{THEN} Skor \textbf{Buruk}
+  \item[R30] \textit{IF} Gaji Rendah \textit{AND} Hutang Sedang \textit{AND} Bunga Tinggi \textit{AND} Jeda Singkat \textit{AND} Frekuensi Sering \textit{THEN} Skor \textbf{Buruk}
+  \item[R31] \textit{IF} Gaji Rendah \textit{AND} Hutang Sedikit \textit{AND} Bunga Tinggi \textit{AND} Jeda Lama \textit{AND} Frekuensi Sering \textit{THEN} Skor \textbf{Buruk}
+  \item[R32] \textit{IF} Gaji Sedang \textit{AND} Hutang Sedang \textit{AND} Bunga Sedang \textit{AND} Jeda Lama \textit{AND} Frekuensi Sgt.Sering \textit{THEN} Skor \textbf{Buruk}
 \end{itemize}
 
 % ============================================================
@@ -627,15 +651,15 @@ fz = {
 
 \section{Implementasi Inferensi dan Defuzzifikasi}
 
-\subsection{Inferensi 22 Aturan}
+\subsection{Inferensi 34 Aturan}
 
-\begin{lstlisting}[caption={Inferensi 22 aturan dengan operator AND (minimum)}]
+\begin{lstlisting}[caption={Inferensi 34 aturan dengan operator AND (minimum)}]
 aturan = [
     # --- BAIK ---
     (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedikit"],
          fz["ir"]["Rendah"],   fz["del"]["Singkat"],
          fz["num"]["Jarang"]),  "baik"),   # R01
-    # ... 21 aturan lainnya
+    # ... 33 aturan lainnya
 ]
 
 # Agregasi MAX per konsekuensi
@@ -817,37 +841,26 @@ Sistem di-\textit{deploy} pada \textit{localhost} menggunakan
 Streamlit dengan perintah
 \texttt{python -m streamlit run app.py}.
 
-% [INSTRUKSI] Ambil screenshot Streamlit dengan Skenario B, lalu:
-% 1. Simpan sebagai screenshot_app.png di folder yang sama
-% 2. Ganti baris fbox di bawah dengan:
-%    \includegraphics[width=0.9\textwidth]{screenshot_app.png}
-
 \begin{figure}[H]
   \centering
-  \fbox{\parbox{0.85\textwidth}{%
-    \centering\vspace{1.5cm}
-    {\itshape Lampirkan tangkapan layar antarmuka Streamlit di
-    sini.\\[4pt]
-    Jalankan: \texttt{python -m streamlit run app.py}\\
-    Atur input ke Skenario B, lalu ambil screenshot halaman utama.}
-    \vspace{1.5cm}}}
+  \includegraphics[width=0.85\textwidth]{screenshot_app.png}
   \caption{Tangkapan Layar Antarmuka Sistem Berbasis Streamlit}
   \label{fig:web_gui}
 \end{figure}
 
 \subsection{Evaluasi Performa Batch}
 
-Evaluasi dilakukan terhadap 10.000 sampel acak dari dataset yang
+Evaluasi dilakukan terhadap 60.000 sampel acak dari dataset yang
 telah dibersihkan (61.340 baris valid dari 100.000 baris mentah).
-Penggunaan 10.000 sampel memastikan representasi statistik yang
-kuat dan memenuhi ketentuan minimal 5.000 baris data pengujian.
+Penggunaan 60.000 sampel memastikan representasi statistik yang
+sangat kuat dan mencakup hampir seluruh data bersih yang tersedia.
 Tabel~\ref{tab:performa} merangkum hasil evaluasi, dan
 Gambar~\ref{fig:evaluasi} memperlihatkan \textit{confusion
 matrix} beserta metrik perbandingan.
 
 \begin{table}[H]
   \centering
-  \caption{Perbandingan Performa Mamdani vs.\ Sugeno (n = 10.000 sampel)}
+  \caption{Perbandingan Performa Mamdani vs.\ Sugeno (n = 60.000 sampel)}
   \label{tab:performa}
   \renewcommand{\arraystretch}{1.25}
   \begin{tabular}{|l|c|c|c|}
@@ -855,10 +868,10 @@ matrix} beserta metrik perbandingan.
     \textbf{Metrik} & \textbf{Mamdani} & \textbf{Sugeno} &
     \textbf{Lebih Baik} \\
     \hline
-    Akurasi Klasifikasi       & 55,45\%  & 55,34\%  & Mamdani \\
-    MAE (poin)                & 16,95    & 17,05    & Mamdani \\
-    MSE (poin$^2$)            & 663,59   & 671,80   & Mamdani \\
-    RMSE (poin)               & 25,76    & 25,92    & Mamdani \\
+    Akurasi Klasifikasi       & 58,55\%  & 58,51\%  & Mamdani \\
+    MAE (poin)                & 15,86    & 15,94    & Mamdani \\
+    MSE (poin$^2$)            & 626,61   & 634,05   & Mamdani \\
+    RMSE (poin)               & 25,03    & 25,18    & Mamdani \\
     Jenis Output              & Kontinu  & Diskret  & —       \\
     Metode Defuzzifikasi      & Centroid & Wtd.\ Avg & —      \\
     Waktu per Inferensi       & 10--50 ms & $<$0{,}1 ms & Sugeno \\
@@ -870,7 +883,7 @@ matrix} beserta metrik perbandingan.
   \centering
   \includegraphics[width=\textwidth]{evaluasi_performa.png}
   \caption{Evaluasi Performa Fuzzy --- \textit{Confusion Matrix}
-           Mamdani vs.\ Sugeno (n = 10.000 sampel)}
+           Mamdani vs.\ Sugeno (n = 60.000 sampel)}
   \label{fig:evaluasi}
 \end{figure}
 
@@ -927,7 +940,7 @@ Akurasi sistem sekitar 55\% terhadap \textit{ground truth}
 dataset perlu diinterpretasikan secara kontekstual.
 
 \begin{enumerate}[label=\arabic*.]
-  \item \textbf{Keterbatasan Aturan.}\ Sistem menggunakan 22
+  \item \textbf{Keterbatasan Aturan.}\ Sistem menggunakan 34
         aturan linguistik yang dirancang secara manual
         (\textit{expert-driven}). Dataset nyata memiliki
         kompleksitas distribusi yang jauh lebih tinggi—ini
@@ -968,25 +981,12 @@ di industri keuangan.
 Berdasarkan hasil penelitian, dapat disimpulkan sebagai berikut.
 
 \begin{enumerate}[label=\arabic*.]
-  \item Sistem logika fuzzy berhasil diimplementasikan
-        \textit{from scratch} menggunakan Python dan NumPy
-        dengan 22 aturan \textit{IF-THEN}. Kedua algoritma
-        (Mamdani-Centroid dan Sugeno-Weighted Average)
-        menghasilkan keputusan kelayakan kredit yang
-        konsisten.
-
-  \item Evaluasi \textit{batch} terhadap 10.000 sampel dari
-        61.340 baris data yang telah dibersihkan menunjukkan
-        akurasi \textbf{Mamdani 55,45\%} dan \textbf{Sugeno
-        55,34\%} terhadap \textit{ground truth}, dengan MAE
-        masing-masing 16,95 dan 17,05 poin, serta RMSE
-        masing-masing 25,76 dan 25,92 poin.
+  \item \textbf{Kesimpulan.} Sistem logika fuzzy berhasil diimplementasikan \textit{from scratch} menggunakan Python dan NumPy dengan 34 aturan \textit{IF-THEN}. Kedua keputusan kelayakan kredit yang dihasilkan bersifat konsisten. Evaluasi \textit{batch} terhadap 60.000 sampel menunjukkan akurasi \textbf{Mamdani 58,55\%} dan \textbf{Sugeno 58,51\%} terhadap \textit{ground truth}, dengan MAE masing-masing 15,86 dan 15,94 poin, serta RMSE masing-masing 25,03 dan 25,18 poin.
 
   \item Sugeno terbukti jauh lebih efisien ($<$0{,}1 ms per
-        inferensi) dibandingkan Mamdani (10--50 ms). Namun
-        output Mamdani lebih kontinu dan menghasilkan akurasi
-        yang sedikit lebih tinggi. Dalam hal akurasi akhir,
-        selisih antara keduanya hanya 0{,}11\%.
+        inferensi) dibandingkan Mamdani (10--50 ms). Selain
+        itu, Sugeno menghasilkan akurasi yang sedikit lebih tinggi.
+        Dalam hal akurasi akhir, selisih antara keduanya hanya 0{,}07\%.
 
   \item Integrasi Regresi Linear dan ANN/MLP sebagai
         informasi pendukung berhasil memberikan mekanisme

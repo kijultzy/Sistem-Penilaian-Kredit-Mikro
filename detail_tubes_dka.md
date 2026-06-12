@@ -100,7 +100,7 @@ Di bawah skor, tabel membandingkan waktu eksekusi:
 #### 3c. Tabel Fuzzifikasi
 Menampilkan **derajat keanggotaan μ(x)** untuk setiap variabel pada tiap himpunan linguistik. Nilai 0.0–1.0 menunjukkan seberapa "anggota" nilai tersebut pada himpunan yang bersangkutan.
 
-#### 3d. Tabel 15 Basis Aturan (Rule Base)
+#### 3d. Tabel 34 Basis Aturan (Rule Base)
 Menampilkan hasil evaluasi tiap aturan:
 - **Kekuatan aturan** = min(μ anteseden1, μ anteseden2, ...) → operator AND
 - **Konsekuensi** = BAIK / STANDAR / BURUK
@@ -156,7 +156,7 @@ Dua jenis fungsi keanggotaan diimplementasikan **100% from scratch** menggunakan
 #### Fungsi Trapesium μ(x, a, b, c, d)
 
 ```
-μ(x) = 0           jika x ≤ a atau x ≥ d
+μ(x) = 0           jika x < a atau x > d
       (x-a)/(b-a)   jika a < x < b   ← naik linear
       1             jika b ≤ x ≤ c   ← puncak datar
       (d-x)/(d-c)   jika c < x < d   ← turun linear
@@ -165,7 +165,7 @@ Dua jenis fungsi keanggotaan diimplementasikan **100% from scratch** menggunakan
 Parameter kode:
 ```python
 def trapesium(x, a, b, c, d):
-    if x <= a or x >= d: return 0.0
+    if x < a or x > d: return 0.0
     if x < b: return (x - a) / (b - a)
     if x <= c: return 1.0
     return (d - x) / (d - c)
@@ -245,7 +245,7 @@ Proses ini dilakukan untuk **semua 5 variabel input**, menghasilkan **15 nilai �
 
 ---
 
-### 4.4 Basis Aturan (15 Aturan IF-THEN)
+### 4.4 Basis Aturan (34 Aturan IF-THEN)
 
 Basis aturan menghubungkan anteseden (kondisi input) dengan konsekuensi (output). Digunakan operator **AND = MIN** (ambil nilai minimum dari semua anteseden).
 
@@ -255,17 +255,36 @@ Basis aturan menghubungkan anteseden (kondisi input) dengan konsekuensi (output)
 | R02 | Tinggi | Sedang | Sedang | Singkat | Jarang | **BAIK** |
 | R03 | Sedang | Sedikit | Rendah | Singkat | Jarang | **BAIK** |
 | R04 | Tinggi | Sedikit | Tinggi | Sedang | Jarang | **BAIK** |
+| R16 | Sedang | Sedikit | Sedang | Singkat | Jarang | **BAIK** |
+| R17 | Tinggi | Sedang | Rendah | Singkat | Jarang | **BAIK** |
+| R23 | Tinggi | Sedikit | Sedang | Singkat | Jarang | **BAIK** |
+| R24 | Sedang | Sedang | Rendah | Singkat | Jarang | **BAIK** |
 | R05 | Sedang | Sedang | Sedang | Sedang | Sering | **STANDAR** |
 | R06 | Rendah | Sedikit | Rendah | Singkat | Jarang | **STANDAR** |
 | R07 | Tinggi | Banyak | Sedang | Singkat | Jarang | **STANDAR** |
 | R08 | Sedang | Banyak | Tinggi | Singkat | Jarang | **STANDAR** |
 | R09 | Rendah | Sedang | Rendah | Singkat | Jarang | **STANDAR** |
 | R10 | Tinggi | Sedang | Tinggi | Sedang | Sering | **STANDAR** |
+| R18 | Sedang | Sedang | Sedang | Singkat | Jarang | **STANDAR** |
+| R19 | Rendah | Sedikit | Sedang | Singkat | Jarang | **STANDAR** |
+| R20 | Sedang | Sedang | Tinggi | Singkat | Jarang | **STANDAR** |
+| R33 | Sedang | Sedikit | Sedang | Singkat | Sering | **STANDAR** |
+| R34 | Tinggi | Sedikit | Sedang | Singkat | Sering | **STANDAR** |
 | R11 | Rendah | Banyak | Tinggi | Lama | SgtSering | **BURUK** |
 | R12 | Tinggi | Banyak | Tinggi | Lama | SgtSering | **BURUK** |
 | R13 | Sedang | Banyak | Sedang | Sedang | Sering | **BURUK** |
 | R14 | Rendah | Sedang | Sedang | Lama | Sering | **BURUK** |
 | R15 | Sedang | Sedikit | Tinggi | Lama | SgtSering | **BURUK** |
+| R21 | Rendah | Sedang | Tinggi | Sedang | Sering | **BURUK** |
+| R22 | Sedang | Banyak | Tinggi | Lama | Sering | **BURUK** |
+| R25 | Rendah | Sedang | Tinggi | Lama | Sering | **BURUK** |
+| R26 | Sedang | Sedang | Tinggi | Sedang | SgtSering | **BURUK** |
+| R27 | Sedang | Sedang | Tinggi | Lama | SgtSering | **BURUK** |
+| R28 | Sedang | Sedang | Tinggi | Sedang | Sering | **BURUK** |
+| R29 | Rendah | Sedang | Tinggi | Lama | Jarang | **BURUK** |
+| R30 | Rendah | Sedang | Tinggi | Singkat | Sering | **BURUK** |
+| R31 | Rendah | Sedikit | Tinggi | Lama | Sering | **BURUK** |
+| R32 | Sedang | Sedang | Sedang | Lama | SgtSering | **BURUK** |
 
 ---
 
@@ -280,18 +299,17 @@ Untuk setiap aturan, kekuatan aktivasi dihitung:
 Kemudian agregasi per konsekuensi menggunakan **MAX**:
 
 ```
-μ_BAIK    = MAX(α_R01, α_R02, α_R03, α_R04)
-μ_STANDAR = MAX(α_R05, α_R06, α_R07, α_R08, α_R09, α_R10)
-μ_BURUK   = MAX(α_R11, α_R12, α_R13, α_R14, α_R15)
+μ_BAIK    = MAX(α_R01, α_R02, α_R03, α_R04, α_R16, α_R17, α_R23, α_R24)
+μ_STANDAR = MAX(α_R05, α_R06, α_R07, α_R08, α_R09, α_R10, α_R18, α_R19, α_R20, α_R33, α_R34)
+μ_BURUK   = MAX(α_R11, α_R12, α_R13, α_R14, α_R15, α_R21, α_R22, α_R25, α_R26, α_R27, α_R28, α_R29, α_R30, α_R31, α_R32)
 ```
 
 Implementasi kode:
 ```python
 def inferensi_agregasi(fz):
     aturan = [
-        (min(fz['inc']['Tinggi'], fz['debt']['Sedikit'], fz['ir']['Rendah'],
-             fz['del']['Singkat'], fz['num']['Jarang']), 'baik'),
-        # ... 14 aturan lainnya
+        (min(fz['inc']['Tinggi'], fz['debt']['Sedikit'], fz['ir']['Rendah'], fz['del']['Singkat'], fz['num']['Jarang']), 'baik'),
+        # ... 33 aturan lainnya
     ]
     u_baik    = max((k for k, c in aturan if c == 'baik'),    default=0.0)
     u_standar = max((k for k, c in aturan if c == 'standar'), default=0.0)
@@ -526,12 +544,12 @@ Untuk SPK Kredit Mikro ini, **kedua metode menghasilkan keputusan yang konsisten
 | Sumber dataset dicantumkan | kaggle.com/datasets/parisrohan/credit-score-classification | ✅ |
 | Variabel linguistik | 5 var × 3 himpunan linguistik | ✅ |
 | Fungsi keanggotaan | Segitiga + Trapesium | ✅ |
-| Rule base ≥ 15 | Tepat 15 aturan | ✅ |
+| Rule base ≥ 15 | Tepat 34 aturan | ✅ |
 | Fuzzy Mamdani (Centroid) | Implementasi from scratch | ✅ |
 | Fuzzy Sugeno (Weighted Avg) | Implementasi from scratch | ✅ |
 | Tanpa library fuzzy | 100% Python + NumPy | ✅ |
 | Perbandingan Mamdani vs Sugeno | Skor, waktu, akurasi, MAE, MSE, RMSE | ✅ |
-| Evaluasi (Akurasi/MAE/MSE) | Batch evaluation 300 sampel | ✅ |
+| Evaluasi (Akurasi/MAE/MSE) | Batch evaluation 60.000 sampel | ✅ |
 | Interpretasi kelebihan/kekurangan | Panel dalam app + dokumentasi | ✅ |
 | Web App (Bonus +5) | Streamlit interactive app | ✅ |
 | Regresi Linear (Bonus +10) | scikit-learn LinearRegression | ✅ |

@@ -106,7 +106,7 @@ st.markdown("""
 
 /* ── Expander styling ────────────────────────────────────── */
 [data-testid="stExpander"] {
-  background: var(--bg-card);
+  background: var(--bg-card) !important;
   border-radius: var(--radius-card) !important;
   border: 1px solid var(--color-border) !important;
   box-shadow: var(--shadow-card);
@@ -141,12 +141,99 @@ st.markdown("""
 }
 [data-testid="stSidebar"] .stSlider > div { padding-top: 0.2rem; }
 
+/* ── Force Light Theme on Inputs and Buttons ──────────────── */
+div[data-baseweb="input"],
+div[data-baseweb="select"],
+div[role="combobox"],
+input {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #E2E8F0 !important;
+}
+div[data-baseweb="input"] input {
+  color: #0F172A !important;
+}
+div[data-testid="stNumberInput"] button,
+button,
+[data-testid^="stBaseButton"] {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1px solid #E2E8F0 !important;
+}
+div[data-testid="stNumberInput"] button:hover,
+button:hover,
+[data-testid^="stBaseButton"]:hover {
+  background-color: #F1F5F9 !important;
+  color: #2563EB !important;
+  border-color: #2563EB !important;
+}
+div[data-testid="stNumberInput"] button:active,
+div[data-testid="stNumberInput"] button:focus,
+button:active, button:focus,
+[data-testid^="stBaseButton"]:active,
+[data-testid^="stBaseButton"]:focus {
+  background-color: #E2E8F0 !important;
+  color: #0F172A !important;
+  border-color: #2563EB !important;
+}
+
 /* ── Spinner ─────────────────────────────────────────────── */
 [data-testid="stSpinner"] { color: var(--color-primary) !important; }
 
 /* ── Divider ─────────────────────────────────────────────── */
 hr { border-color: var(--color-border) !important; margin: 1.5rem 0 !important; }
+
+/* ── Text Color Overrides for Light Theme ────────────────── */
+.stApp,
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] h1,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3,
+[data-testid="stMarkdownContainer"] h4,
+[data-testid="stMarkdownContainer"] h5,
+[data-testid="stMarkdownContainer"] h6,
+[data-testid="stExpander"] p,
+[data-testid="stExpander"] li,
+[data-testid="stExpander"] h1,
+[data-testid="stExpander"] h2,
+[data-testid="stExpander"] h3,
+[data-testid="stExpander"] h4,
+[data-testid="stExpander"] label,
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p {
+  color: var(--color-text) !important;
+}
+
+[data-testid="stCaptionContainer"],
+[data-testid="stCaptionContainer"] p {
+  color: var(--color-muted) !important;
+}
 </style>
+<script>
+function BukaPanelInputSidebar() {
+    try {
+        const doc = window.parent.document;
+        const sidebar = doc.querySelector('[data-testid="stSidebar"]');
+        const isCollapsed = sidebar ? (sidebar.getBoundingClientRect().width === 0) : true;
+        if (isCollapsed) {
+            const toggleBtn = doc.querySelector('[data-testid="stSidebarCollapseButton"]') || 
+                              doc.querySelector('[data-testid="stSidebarCollapseButton"] button') ||
+                              doc.querySelector('button[aria-label="Open sidebar"]');
+            if (toggleBtn) toggleBtn.click();
+        }
+    } catch(e) {
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        const isCollapsed = sidebar ? (sidebar.getBoundingClientRect().width === 0) : true;
+        if (isCollapsed) {
+            const toggleBtn = document.querySelector('[data-testid="stSidebarCollapseButton"]') || 
+                              document.querySelector('[data-testid="stSidebarCollapseButton"] button') ||
+                              document.querySelector('button[aria-label="Open sidebar"]');
+            if (toggleBtn) toggleBtn.click();
+        }
+    }
+}
+</script>
 """, unsafe_allow_html=True)
 
 def card_keputusan(skor: float, label: str, kategori: str) -> str:
@@ -262,6 +349,7 @@ def progress_bar(label: str, value: float, color: str = "#2563EB") -> str:
 def muat_dan_latih():
     """
     Memuat train.csv, melakukan data cleaning menyeluruh,
+    mengambil sampel acak 60.000 baris bersih,
     lalu melatih model Regresi Linear dan ANN (MLP).
     Mengembalikan (model_lr, model_dl, scaler).
     """
@@ -286,7 +374,7 @@ def muat_dan_latih():
         df_c[col] = (
             df_c[col]
             .astype(str)
-            .str.replace(r"[^\d.\-]", "", regex=True)   # pertahankan '-' agar bisa deteksi minus
+            .str.replace(r"[^\d.\-]", "", regex=True)   # pertahaman '-' agar bisa deteksi minus
             .replace("", np.nan)
         )
         df_c[col] = pd.to_numeric(df_c[col], errors="coerce")
@@ -303,6 +391,23 @@ def muat_dan_latih():
     df_c["Target_Numerik"] = df_c[kolom_target].map(peta_skor)
     df_c.dropna(subset=["Target_Numerik"], inplace=True)
     df_c["Target_Numerik"] = df_c["Target_Numerik"].astype(int)
+
+    # e) Buang duplikat
+    df_c.drop_duplicates(inplace=True)
+
+    # f) Saring Outlier Bisnis
+    df_c = df_c[
+        (df_c["Annual_Income"] >= 0) &
+        (df_c["Annual_Income"] <= 1500000) &
+        (df_c["Outstanding_Debt"] >= 0) &
+        (df_c["Interest_Rate"] >= 0) &
+        (df_c["Interest_Rate"] <= 35) &
+        (df_c["Delay_from_due_date"] >= 0) &
+        (df_c["Num_of_Delayed_Payment"] >= 0)
+    ]
+
+    # g) Ambil sampel tepat 60.000 baris jika data mencukupi
+    df_c = df_c.sample(n=min(60000, len(df_c)), random_state=42).reset_index(drop=True)
 
     # ── 3. Persiapan Fitur & Label ────────────────────────────────────────────
     X = df_c[kolom_fitur].reset_index(drop=True)
@@ -356,7 +461,7 @@ def segitiga(x: float, a: float, b: float, c: float) -> float:
 
 def trapesium(x: float, a: float, b: float, c: float, d: float) -> float:
     """Fungsi keanggotaan kurva Trapesium."""
-    if x <= a or x >= d:
+    if x < a or x > d:
         return 0.0
     if a < x < b:
         return (x - a) / (b - a) if b != a else 1.0
@@ -399,7 +504,7 @@ utang = st.sidebar.number_input(
 
 st.sidebar.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
 
-suku_bunga = st.sidebar.slider("Suku Bunga (%)", min_value=1, max_value=35, value=12)
+suku_bunga = st.sidebar.slider("Suku Bunga (%)", min_value=0, max_value=35, value=12)
 keterlambatan_hari = st.sidebar.slider("Keterlambatan (Hari)", min_value=0, max_value=60, value=15)
 jumlah_terlambat = st.sidebar.slider("Frekuensi Terlambat (Kali)", min_value=0, max_value=25, value=4)
 
@@ -469,7 +574,7 @@ fz = {
     },
 }
 
-# ─── Inferensi: 22 Basis Aturan (MIN/AND) ────────────────────────────────────
+# ─── Inferensi: 34 Basis Aturan (MIN/AND) ────────────────────────────────────
 # Konsekuensi: BAIK, STANDAR, BURUK
 # Format: (kekuatan_firing, konsekuensi)
 aturan = [
@@ -480,6 +585,8 @@ aturan = [
     (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedikit"], fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["Jarang"]),    "baik"),    # R04
     (min(fz["inc"]["Sedang"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R16 ★ Baru
     (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedang"],  fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R17 ★ Baru
+    (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R23 ★ Baru
+    (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R24 ★ Baru
     # ── Aturan → STANDAR (Kredit Perlu Pertimbangan) ─────────────────────────
     (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Sedang"],  fz["del"]["Sedang"],  fz["num"]["Sering"]),    "standar"), # R05
     (min(fz["inc"]["Rendah"],  fz["debt"]["Sedikit"], fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R06
@@ -490,6 +597,8 @@ aturan = [
     (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R18 ★ Baru: kasus umum "titik tengah"
     (min(fz["inc"]["Rendah"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R19 ★ Baru
     (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R20 ★ Baru
+    (min(fz["inc"]["Sedang"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Sering"]),    "standar"), # R33 ★ Baru
+    (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Sering"]),    "standar"), # R34 ★ Baru
     # ── Aturan → BURUK (Kredit Ditolak) ──────────────────────────────────────
     (min(fz["inc"]["Rendah"],  fz["debt"]["Banyak"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R11
     (min(fz["inc"]["Tinggi"],  fz["debt"]["Banyak"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R12
@@ -498,6 +607,14 @@ aturan = [
     (min(fz["inc"]["Sedang"],  fz["debt"]["Sedikit"], fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R15
     (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["Sering"]),    "buruk"),   # R21 ★ Baru
     (min(fz["inc"]["Sedang"],  fz["debt"]["Banyak"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["Sering"]),    "buruk"),   # R22 ★ Baru
+    (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["Sering"]),    "buruk"),   # R25 ★ Baru
+    (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["SgtSering"]), "buruk"),   # R26 ★ Baru
+    (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R27 ★ Baru
+    (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["Sering"]),    "buruk"),   # R28 ★ Baru
+    (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["Jarang"]),    "buruk"),   # R29 ★ Baru
+    (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Singkat"], fz["num"]["Sering"]),    "buruk"),   # R30 ★ Baru
+    (min(fz["inc"]["Rendah"],  fz["debt"]["Sedikit"], fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["Sering"]),    "buruk"),   # R31 ★ Baru
+    (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Sedang"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R32 ★ Baru
 ]
 
 
@@ -675,8 +792,72 @@ def buat_chart_mf(
     return fig
 
 
+def buat_chart_output_fuzzy(u_baik: float, u_standar: float, u_buruk: float, skor_mamdani: float, skor_sugeno: float):
+    """
+    Membuat grafik 1D yang memvisualisasikan kurva keanggotaan output
+    (Buruk, Standar, Baik), daerah agregasi MAX, dan nilai tegas
+    Mamdani & Sugeno.
+    """
+    fig, ax = plt.subplots(figsize=(10, 3.8))
+    fig.patch.set_facecolor('#FFFFFF')
+    ax.set_facecolor('#F8FAFC')
+    
+    x = np.linspace(0, 100, 500)
+    
+    # Definisikan kurva output
+    # BAIK    : Trapesium [70, 85, 100, 100]
+    # STANDAR : Segitiga  [30, 50, 75]
+    # BURUK   : Trapesium [0, 0, 25, 45]
+    mf_b  = _vtr(x, 70, 85, 100, 100)
+    mf_s  = _vsg(x, 30, 50, 75)
+    mf_r  = _vtr(x, 0, 0, 25, 45)
+    
+    # Potong dengan firing strength
+    mu_b  = np.minimum(u_baik, mf_b)
+    mu_s  = np.minimum(u_standar, mf_s)
+    mu_r  = np.minimum(u_buruk, mf_r)
+    
+    # Agregasi MAX
+    mu_agg = np.maximum(np.maximum(mu_b, mu_s), mu_r)
+    
+    # Plot kurva asli (tipis, abu-abu / putus-putus)
+    ax.plot(x, mf_r, color='#EF4444', lw=1.2, ls=':', label='Buruk (Asli)')
+    ax.plot(x, mf_s, color='#F59E0B', lw=1.2, ls=':', label='Standar (Asli)')
+    ax.plot(x, mf_b, color='#10B981', lw=1.2, ls=':', label='Baik (Asli)')
+    
+    # Fill daerah yang aktif/terpotong
+    ax.fill_between(x, mu_r, color='#EF4444', alpha=0.10)
+    ax.fill_between(x, mu_s, color='#F59E0B', alpha=0.10)
+    ax.fill_between(x, mu_b, color='#10B981', alpha=0.10)
+    
+    # Plot kurva hasil agregasi tebal
+    ax.plot(x, mu_agg, color='#2563EB', lw=2.0, label='Agregasi Aturan (Fuzzy Set)')
+    ax.fill_between(x, mu_agg, color='#2563EB', alpha=0.08)
+    
+    # Tarik garis defuzzifikasi Mamdani
+    ax.axvline(skor_mamdani, color='#FF6B6B', lw=2.2, ls='-', label=f'Centroid Mamdani: {skor_mamdani:.2f}')
+    ax.scatter([skor_mamdani], [0], color='#FF6B6B', s=70, zorder=5)
+    
+    # Tarik garis defuzzifikasi Sugeno
+    ax.axvline(skor_sugeno, color='#7C3AED', lw=2.2, ls='--', label=f'Sugeno Wtd Avg: {skor_sugeno:.2f}')
+    ax.scatter([skor_sugeno], [0], color='#7C3AED', s=70, zorder=5)
+    
+    ax.set_title('Visualisasi Agregasi & Defuzzifikasi Output Fuzzy', fontsize=11, fontweight='bold', color='#0F172A')
+    ax.set_xlabel('Skor Kelayakan Kredit (0 – 100)', fontsize=9, color='#475569')
+    ax.set_ylabel('Derajat Keanggotaan  μ(z)', fontsize=9, color='#475569')
+    ax.set_ylim(-0.05, 1.15)
+    ax.set_xlim(0, 100)
+    ax.grid(True, alpha=0.3, ls='--', axis='both')
+    ax.spines[['top', 'right']].set_visible(False)
+    ax.tick_params(colors='#64748B', labelsize=8)
+    ax.legend(fontsize=8, loc='upper left', framealpha=0.9, facecolor='#FFFFFF', edgecolor='#E2E8F0')
+    
+    plt.tight_layout()
+    return fig
+
+
 @st.cache_data(show_spinner=False)
-def _evaluasi_batch_st(n_sampel: int = 300) -> dict:
+def _evaluasi_batch_st(n_sampel: int = 60000) -> dict:
     """
     Evaluasi batch vectorized pada sampel acak dari train.csv.
     Di-cache Streamlit — hanya dijalankan sekali saat startup.
@@ -690,14 +871,31 @@ def _evaluasi_batch_st(n_sampel: int = 300) -> dict:
              'Delay_from_due_date', 'Num_of_Delayed_Payment', 'Credit_Score']
     df_ev = pd.read_csv("train.csv", low_memory=False)[kolom].copy()
     for col in kolom[:-1]:
-        df_ev[col] = pd.to_numeric(
-            df_ev[col].astype(str).str.replace(r'[^\d.\-]', '', regex=True).replace('', np.nan),
-            errors='coerce'
+        df_ev[col] = (
+            df_ev[col].astype(str)
+            .str.replace(r'[^\d.\-]', '', regex=True)
+            .replace('', np.nan)
         )
+        df_ev[col] = pd.to_numeric(df_ev[col], errors='coerce')
+    df_ev.dropna(inplace=True)
     df_ev['Delay_from_due_date']    = df_ev['Delay_from_due_date'].clip(lower=0)
     df_ev['Num_of_Delayed_Payment'] = df_ev['Num_of_Delayed_Payment'].clip(lower=0)
-    df_ev.dropna(inplace=True)
     df_ev = df_ev[df_ev['Credit_Score'].isin(['Poor', 'Standard', 'Good'])]
+    
+    # Buang duplikat
+    df_ev.drop_duplicates(inplace=True)
+    
+    # Outlier
+    df_ev = df_ev[
+        (df_ev['Annual_Income'] >= 0) &
+        (df_ev['Annual_Income'] <= 1500000) &
+        (df_ev['Outstanding_Debt'] >= 0) &
+        (df_ev['Interest_Rate'] >= 0) &
+        (df_ev['Interest_Rate'] <= 35) &
+        (df_ev['Delay_from_due_date'] >= 0) &
+        (df_ev['Num_of_Delayed_Payment'] >= 0)
+    ]
+    
     n_sampel = min(n_sampel, len(df_ev))
     df_ev = df_ev.sample(n=n_sampel, random_state=42).reset_index(drop=True)
 
@@ -726,7 +924,9 @@ def _evaluasi_batch_st(n_sampel: int = 300) -> dict:
               vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Rendah'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang'])))),   # R03
               vm(fz_v['inc']['Tinggi'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Sedang'],  fz_v['num']['Jarang'])))),   # R04
               vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang'])))),   # R16
-              vm(fz_v['inc']['Tinggi'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Rendah'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang']))))    # R17
+              vm(fz_v['inc']['Tinggi'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Rendah'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang'])))),   # R17
+              vm(fz_v['inc']['Tinggi'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang'])))),   # R23
+              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Rendah'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang']()))))    # R24
     )
     us  = vmx(vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Sedang'],  fz_v['num']['Sering'])))),   # R05
               vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Rendah'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang'])))),   # R06
@@ -736,7 +936,9 @@ def _evaluasi_batch_st(n_sampel: int = 300) -> dict:
               vm(fz_v['inc']['Tinggi'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Sedang'],  fz_v['num']['Sering'])))),   # R10
               vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang'])))),   # R18
               vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang'])))),   # R19
-              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang']))))    # R20
+              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Singkat'], fz_v['num']['Jarang'])))),   # R20
+              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Singkat'], fz_v['num']['Sering'])))),   # R33
+              vm(fz_v['inc']['Tinggi'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Singkat'], fz_v['num']['Sering']()))))   # R34
     )
     ubr = vmx(vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Banyak'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['SgtSering'])))),  # R11
               vm(fz_v['inc']['Tinggi'], vm(fz_v['debt']['Banyak'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['SgtSering'])))),  # R12
@@ -744,21 +946,30 @@ def _evaluasi_batch_st(n_sampel: int = 300) -> dict:
               vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Lama'],    fz_v['num']['Sering'])))),     # R14
               vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['SgtSering'])))),  # R15
               vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Sedang'],  fz_v['num']['Sering'])))),     # R21
-              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Banyak'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['Sering']))))      # R22
+              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Banyak'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['Sering'])))),      # R22
+              vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['Sering'])))),      # R25
+              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Sedang'],  fz_v['num']['SgtSering'])))),   # R26
+              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['SgtSering'])))),   # R27
+              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Sedang'],  fz_v['num']['Sering'])))),      # R28
+              vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['Jarang'])))),      # R29
+              vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Singkat'], fz_v['num']['Sering'])))),   # R30
+              vm(fz_v['inc']['Rendah'], vm(fz_v['debt']['Sedikit'], vm(fz_v['ir']['Tinggi'],  vm(fz_v['del']['Lama'],    fz_v['num']['Sering'])))),     # R31
+              vm(fz_v['inc']['Sedang'], vm(fz_v['debt']['Sedang'],  vm(fz_v['ir']['Sedang'],  vm(fz_v['del']['Lama'],    fz_v['num']['SgtSering']()))))   # R32
     )
-
 
     tot = ub + us + ubr
     ps  = np.where(tot == 0, 50.0, (ub*90 + us*50 + ubr*15) / np.where(tot == 0, 1, tot))
 
     x_o = np.linspace(0, 100, 100)
     mfb = _vtr(x_o,70,85,100,100); mfs = _vsg(x_o,30,50,75); mfbr = _vtr(x_o,0,0,25,45)
-    pm  = np.zeros(n_sampel)
-    for i in range(n_sampel):
-        if ub[i] == us[i] == ubr[i] == 0.0: pm[i] = 50.0; continue
-        mu  = np.maximum(np.maximum(np.minimum(ub[i],mfb), np.minimum(us[i],mfs)), np.minimum(ubr[i],mfbr))
-        den = mu.sum()
-        pm[i] = float(np.dot(x_o, mu) / den) if den > 0 else 50.0
+    
+    # Vektor Mamdani Defuzzification
+    mu_b = np.minimum(ub[:, np.newaxis], mfb)
+    mu_s = np.minimum(us[:, np.newaxis], mfs)
+    mu_r = np.minimum(ubr[:, np.newaxis], mfbr)
+    mu_vec = np.maximum(np.maximum(mu_b, mu_s), mu_r)
+    den_vec = mu_vec.sum(axis=1)
+    pm = np.where(den_vec == 0, 50.0, np.dot(mu_vec, x_o) / np.where(den_vec == 0, 1.0, den_vec))
 
     def slbl(s): return 'Good' if s >= 70 else ('Standard' if s >= 40 else 'Poor')
     def lnum(l): return {'Poor':15.,'Standard':50.,'Good':90.}[l]
@@ -837,6 +1048,27 @@ st.markdown("""
         </div>
     </div>
     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <button onclick="BukaPanelInputSidebar()" style="
+            background: #2563EB;
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.3rem 0.8rem;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+            transition: all 0.2s ease;
+            margin-right: 0.5rem;
+        " onmouseover="this.style.background='#1D4ED8'; this.style.transform='translateY(-1px)';"
+          onmouseout="this.style.background='#2563EB'; this.style.transform='translateY(0)';">
+            👤 Buka Panel Input
+        </button>
         <span style="background: rgba(16,185,129,0.1); color: #059669; font-size: 0.72rem;
                      font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 999px;
                      text-transform: uppercase; letter-spacing: 0.04em;">
@@ -850,7 +1082,7 @@ st.markdown("""
         <span style="background: rgba(124,58,237,0.1); color: #7C3AED; font-size: 0.72rem;
                      font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 999px;
                      text-transform: uppercase; letter-spacing: 0.04em;">
-            22 Rules
+            34 Rules
         </span>
     </div>
 </div>
@@ -906,7 +1138,7 @@ with c4:
 st.markdown("<hr style='border-color: #E2E8F0; margin: 1.5rem 0;'>", unsafe_allow_html=True)
 st.markdown(section_header(
     "Kekuatan Aturan Fuzzy",
-    "Hasil agregasi MAX dari 22 basis aturan — nilai 1.0 = aturan aktif penuh"
+    "Hasil agregasi MAX dari 34 basis aturan — nilai 1.0 = aturan aktif penuh"
 ), unsafe_allow_html=True)
 
 col_prog, col_detail = st.columns([1, 1])
@@ -926,7 +1158,7 @@ with col_detail:
             Ringkasan Inferensi
         </div>
         <div style="font-size: 0.85rem; color: #475569; line-height: 1.8;">
-            Aturan aktif: <strong style="color:#0F172A;">{sum(1 for k,_ in aturan if k > 0.001)}</strong> dari 22<br>
+            Aturan aktif: <strong style="color:#0F172A;">{sum(1 for k,_ in aturan if k > 0.001)}</strong> dari 34<br>
             Dominan: <strong style="color:#0F172A;">{'BAIK' if u_baik >= u_standar and u_baik >= u_buruk else ('STANDAR' if u_standar >= u_buruk else 'BURUK')}</strong><br>
             Mamdani output: <strong style="color:#FF6B6B;">{skor_mamdani:.4f}</strong><br>
             Sugeno output: <strong style="color:#4ECDC4;">{skor_sugeno:.4f}</strong>
@@ -934,7 +1166,7 @@ with col_detail:
     </div>
     """, unsafe_allow_html=True)
 
-with st.expander("Rincian 22 Basis Aturan Fuzzy — Firing Strength per Rule"):
+with st.expander("Rincian 34 Basis Aturan Fuzzy — Firing Strength per Rule"):
     st.markdown(f"""
     <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem; flex-wrap: wrap;">
         <span style="background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;
@@ -955,6 +1187,8 @@ with st.expander("Rincian 22 Basis Aturan Fuzzy — Firing Strength per Rule"):
         "R04: inc=Tinggi,  debt=Sedikit, ir=Tinggi,  del=Sedang,  num=Jarang    → BAIK",
         "R16: inc=Sedang,  debt=Sedikit, ir=Sedang,  del=Singkat, num=Jarang    → BAIK",
         "R17: inc=Tinggi,  debt=Sedang,  ir=Rendah,  del=Singkat, num=Jarang    → BAIK",
+        "R23: inc=Tinggi,  debt=Sedikit, ir=Sedang,  del=Singkat, num=Jarang    → BAIK",
+        "R24: inc=Sedang,  debt=Sedang,  ir=Rendah,  del=Singkat, num=Jarang    → BAIK",
         "R05: inc=Sedang,  debt=Sedang,  ir=Sedang,  del=Sedang,  num=Sering    → STANDAR",
         "R06: inc=Rendah,  debt=Sedikit, ir=Rendah,  del=Singkat, num=Jarang    → STANDAR",
         "R07: inc=Tinggi,  debt=Banyak,  ir=Sedang,  del=Singkat, num=Jarang    → STANDAR",
@@ -964,6 +1198,8 @@ with st.expander("Rincian 22 Basis Aturan Fuzzy — Firing Strength per Rule"):
         "R18: inc=Sedang,  debt=Sedang,  ir=Sedang,  del=Singkat, num=Jarang    → STANDAR",
         "R19: inc=Rendah,  debt=Sedikit, ir=Sedang,  del=Singkat, num=Jarang    → STANDAR",
         "R20: inc=Sedang,  debt=Sedang,  ir=Tinggi,  del=Singkat, num=Jarang    → STANDAR",
+        "R33: inc=Sedang,  debt=Sedikit, ir=Sedang,  del=Singkat, num=Sering    → STANDAR",
+        "R34: inc=Tinggi,  debt=Sedikit, ir=Sedang,  del=Singkat, num=Sering    → STANDAR",
         "R11: inc=Rendah,  debt=Banyak,  ir=Tinggi,  del=Lama,    num=SgtSering → BURUK",
         "R12: inc=Tinggi,  debt=Banyak,  ir=Tinggi,  del=Lama,    num=SgtSering → BURUK",
         "R13: inc=Sedang,  debt=Banyak,  ir=Sedang,  del=Sedang,  num=Sering    → BURUK",
@@ -971,6 +1207,14 @@ with st.expander("Rincian 22 Basis Aturan Fuzzy — Firing Strength per Rule"):
         "R15: inc=Sedang,  debt=Sedikit, ir=Tinggi,  del=Lama,    num=SgtSering → BURUK",
         "R21: inc=Rendah,  debt=Sedang,  ir=Tinggi,  del=Sedang,  num=Sering    → BURUK",
         "R22: inc=Sedang,  debt=Banyak,  ir=Tinggi,  del=Lama,    num=Sering    → BURUK",
+        "R25: inc=Rendah,  debt=Sedang,  ir=Tinggi,  del=Lama,    num=Sering    → BURUK",
+        "R26: inc=Sedang,  debt=Sedang,  ir=Tinggi,  del=Sedang,  num=SgtSering → BURUK",
+        "R27: inc=Sedang,  debt=Sedang,  ir=Tinggi,  del=Lama,    num=SgtSering → BURUK",
+        "R28: inc=Sedang,  debt=Sedang,  ir=Tinggi,  del=Sedang,  num=Sering    → BURUK",
+        "R29: inc=Rendah,  debt=Sedang,  ir=Tinggi,  del=Lama,    num=Jarang    → BURUK",
+        "R30: inc=Rendah,  debt=Sedang,  ir=Tinggi,  del=Singkat, num=Sering    → BURUK",
+        "R31: inc=Rendah,  debt=Sedikit, ir=Tinggi,  del=Lama,    num=Sering    → BURUK",
+        "R32: inc=Sedang,  debt=Sedang,  ir=Sedang,  del=Lama,    num=SgtSering → BURUK",
     ]
     for i, (kuat, kons) in enumerate(aturan):
         tabel_aturan.append({
@@ -998,22 +1242,25 @@ with st.expander("Nilai Fuzzifikasi per Variabel Input"):
             for h, w in zip(himpunan_list, warna_list):
                 val = fz[var_key].get(h, 0.0)
                 pct = val * 100
-                rows_html += f"""
-                <div style="margin-bottom:0.6rem;">
-                    <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:0.2rem;">
-                        <span style="color:#475569;font-weight:500;">{h}</span>
-                        <span style="color:#0F172A;font-weight:700;">{val:.3f}</span>
-                    </div>
-                    <div style="background:#E2E8F0;border-radius:999px;height:5px;">
-                        <div style="background:{w};width:{pct:.1f}%;height:5px;border-radius:999px;"></div>
-                    </div>
-                </div>"""
-            st.markdown(f"""
-            <div style="background:#F8FAFC;border-radius:12px;padding:1rem;border:1px solid #E2E8F0;">
-                <div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;
-                            letter-spacing:0.06em;margin-bottom:0.7rem;">{var_label}</div>
-                {rows_html}
-            </div>""", unsafe_allow_html=True)
+                rows_html += (
+                    f'<div style="margin-bottom:0.6rem;">'
+                    f'<div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:0.2rem;">'
+                    f'<span style="color:#475569;font-weight:500;">{h}</span>'
+                    f'<span style="color:#0F172A;font-weight:700;">{val:.3f}</span>'
+                    f'</div>'
+                    f'<div style="background:#E2E8F0;border-radius:999px;height:5px;border:none;">'
+                    f'<div style="background:{w};width:{pct:.1f}%;height:5px;border-radius:999px;border:none;"></div>'
+                    f'</div>'
+                    f'</div>'
+                )
+            st.markdown(
+                f'<div style="background:#F8FAFC;border-radius:12px;padding:1rem;border:1px solid #E2E8F0;">'
+                f'<div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;'
+                f'letter-spacing:0.06em;margin-bottom:0.7rem;">{var_label}</div>'
+                f'{rows_html}'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
 
 st.markdown("<hr style='border-color: #E2E8F0; margin: 1.5rem 0;'>", unsafe_allow_html=True)
@@ -1043,10 +1290,20 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ─── Visualisasi Fungsi Keanggotaan Real-time ────────────────────────────────
+# ─── Visualisasi Output & Keanggotaan Real-time ──────────────────────────────
 st.markdown("<hr style='border-color: #E2E8F0; margin: 1.5rem 0;'>", unsafe_allow_html=True)
 st.markdown(section_header(
-    "Kurva Fungsi Keanggotaan",
+    "Visualisasi Output Fuzzy Real-time",
+    "Menampilkan area keputusan hasil agregasi MAX basis aturan (biru) dan garis hasil tegas Mamdani & Sugeno"
+), unsafe_allow_html=True)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    _fig_out = buat_chart_output_fuzzy(u_baik, u_standar, u_buruk, skor_mamdani, skor_sugeno)
+    st.pyplot(_fig_out, width='stretch')
+    plt.close(_fig_out)
+
+st.markdown(section_header(
+    "Kurva Fungsi Keanggotaan Input",
     "Posisi nilai input saat ini ditunjukkan oleh garis putus-putus · μ(x) = derajat keanggotaan"
 ), unsafe_allow_html=True)
 with warnings.catch_warnings():
@@ -1062,9 +1319,9 @@ st.markdown("---")
 with st.expander("Evaluasi Performa Batch — Ground Truth vs Prediksi Fuzzy", expanded=False):
     st.caption(
         "Evaluasi di-cache dan dijalankan SEKALI saat startup "
-        f"menggunakan 300 sampel acak dari train.csv."
+        f"menggunakan 60.000 sampel acak dari train.csv."
     )
-    ev = _evaluasi_batch_st(n_sampel=300)
+    ev = _evaluasi_batch_st(n_sampel=60000)
 
     if ev is None:
         st.warning(

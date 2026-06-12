@@ -116,23 +116,45 @@ def fuzzifikasi(inc, debt, ir, del_day, num_del):
 
 
 def inferensi_agregasi(fz):
-    """15 basis aturan MIN/AND, agregasi MAX per konsekuensi."""
+    """34 basis aturan MIN/AND, agregasi MAX per konsekuensi."""
     aturan = [
-        (min(fz['inc']['Tinggi'], fz['debt']['Sedikit'], fz['ir']['Rendah'], fz['del']['Singkat'], fz['num']['Jarang']),    'baik'),
-        (min(fz['inc']['Tinggi'], fz['debt']['Sedang'],  fz['ir']['Sedang'], fz['del']['Singkat'], fz['num']['Jarang']),    'baik'),
-        (min(fz['inc']['Sedang'], fz['debt']['Sedikit'], fz['ir']['Rendah'], fz['del']['Singkat'], fz['num']['Jarang']),    'baik'),
-        (min(fz['inc']['Tinggi'], fz['debt']['Sedikit'], fz['ir']['Tinggi'], fz['del']['Sedang'],  fz['num']['Jarang']),    'baik'),
-        (min(fz['inc']['Sedang'], fz['debt']['Sedang'],  fz['ir']['Sedang'], fz['del']['Sedang'],  fz['num']['Sering']),    'standar'),
-        (min(fz['inc']['Rendah'], fz['debt']['Sedikit'], fz['ir']['Rendah'], fz['del']['Singkat'], fz['num']['Jarang']),    'standar'),
-        (min(fz['inc']['Tinggi'], fz['debt']['Banyak'],  fz['ir']['Sedang'], fz['del']['Singkat'], fz['num']['Jarang']),    'standar'),
-        (min(fz['inc']['Sedang'], fz['debt']['Banyak'],  fz['ir']['Tinggi'], fz['del']['Singkat'], fz['num']['Jarang']),    'standar'),
-        (min(fz['inc']['Rendah'], fz['debt']['Sedang'],  fz['ir']['Rendah'], fz['del']['Singkat'], fz['num']['Jarang']),    'standar'),
-        (min(fz['inc']['Tinggi'], fz['debt']['Sedang'],  fz['ir']['Tinggi'], fz['del']['Sedang'],  fz['num']['Sering']),    'standar'),
-        (min(fz['inc']['Rendah'], fz['debt']['Banyak'],  fz['ir']['Tinggi'], fz['del']['Lama'],    fz['num']['SgtSering']), 'buruk'),
-        (min(fz['inc']['Tinggi'], fz['debt']['Banyak'],  fz['ir']['Tinggi'], fz['del']['Lama'],    fz['num']['SgtSering']), 'buruk'),
-        (min(fz['inc']['Sedang'], fz['debt']['Banyak'],  fz['ir']['Sedang'], fz['del']['Sedang'],  fz['num']['Sering']),    'buruk'),
-        (min(fz['inc']['Rendah'], fz['debt']['Sedang'],  fz['ir']['Sedang'], fz['del']['Lama'],    fz['num']['Sering']),    'buruk'),
-        (min(fz['inc']['Sedang'], fz['debt']['Sedikit'], fz['ir']['Tinggi'], fz['del']['Lama'],    fz['num']['SgtSering']), 'buruk'),
+        # ── Aturan → BAIK (Kredit Layak Disetujui) ──────────────────────────────
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedikit"], fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R01
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedang"],  fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R02
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedikit"], fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R03
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedikit"], fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["Jarang"]),    "baik"),    # R04
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R16
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedang"],  fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R17
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R23 ★ Baru
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "baik"),    # R24 ★ Baru
+        # ── Aturan → STANDAR (Kredit Perlu Pertimbangan) ─────────────────────────
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Sedang"],  fz["del"]["Sedang"],  fz["num"]["Sering"]),    "standar"), # R05
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedikit"], fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R06
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Banyak"],  fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R07
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Banyak"],  fz["ir"]["Tinggi"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R08
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Rendah"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R09
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["Sering"]),    "standar"), # R10
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R18
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R19
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Singkat"], fz["num"]["Jarang"]),    "standar"), # R20
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Sering"]),    "standar"), # R33 ★ Baru
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Sedikit"], fz["ir"]["Sedang"],  fz["del"]["Singkat"], fz["num"]["Sering"]),    "standar"), # R34 ★ Baru
+        # ── Aturan → BURUK (Kredit Ditolak) ──────────────────────────────────────
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Banyak"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R11
+        (min(fz["inc"]["Tinggi"],  fz["debt"]["Banyak"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R12
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Banyak"],  fz["ir"]["Sedang"],  fz["del"]["Sedang"],  fz["num"]["Sering"]),    "buruk"),   # R13
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Sedang"],  fz["del"]["Lama"],    fz["num"]["Sering"]),    "buruk"),   # R14
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedikit"], fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R15
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["Sering"]),    "buruk"),   # R21
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Banyak"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["Sering"]),    "buruk"),   # R22
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["Sering"]),    "buruk"),   # R25 ★ Baru
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["SgtSering"]), "buruk"),   # R26 ★ Baru
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R27 ★ Baru
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Sedang"],  fz["num"]["Sering"]),    "buruk"),   # R28 ★ Baru
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["Jarang"]),    "buruk"),   # R29 ★ Baru
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedang"],  fz["ir"]["Tinggi"],  fz["del"]["Singkat"], fz["num"]["Sering"]),    "buruk"),   # R30 ★ Baru
+        (min(fz["inc"]["Rendah"],  fz["debt"]["Sedikit"], fz["ir"]["Tinggi"],  fz["del"]["Lama"],    fz["num"]["Sering"]),    "buruk"),   # R31 ★ Baru
+        (min(fz["inc"]["Sedang"],  fz["debt"]["Sedang"],  fz["ir"]["Sedang"],  fz["del"]["Lama"],    fz["num"]["SgtSering"]), "buruk"),   # R32 ★ Baru
     ]
     u_baik    = max((k for k, c in aturan if c == 'baik'),    default=0.0)
     u_standar = max((k for k, c in aturan if c == 'standar'), default=0.0)
@@ -536,7 +558,7 @@ def cetak_kesimpulan(input_data: dict, skor_sugeno: float):
 
         print(f"  📊  KESIMPULAN AKHIR")
         print(f"  {'─'*55}")
-        print(f"  Berdasarkan evaluasi logika fuzzy terhadap 15 basis aturan,")
+        print(f"  Berdasarkan evaluasi logika fuzzy terhadap 34 basis aturan,")
         print(f"  profil finansial nasabah ini SANGAT LAYAK menerima kredit.")
         print(f"  Rekomendasi: Persetujuan kredit dapat diberikan dengan limit")
         print(f"  kompetitif. Monitoring berkala tetap disarankan.")
@@ -692,7 +714,7 @@ def cetak_kesimpulan(input_data: dict, skor_sugeno: float):
         print(f"  {'─'*55}")
         print(f"  Profil finansial nasabah ini memiliki RISIKO SANGAT TINGGI.")
         print(f"  Sistem Pendukung Keputusan merekomendasikan PENOLAKAN kredit")
-        print(f"  berdasarkan evaluasi 15 basis aturan fuzzy.")
+        print(f"  berdasarkan evaluasi 34 basis aturan fuzzy.")
         print(f"  Rekomendasi: Tolak permohonan dan sarankan program pemulihan")
         print(f"  keuangan (debt counseling) sebelum mengajukan kembali.")
 
@@ -710,9 +732,9 @@ def cetak_kesimpulan(input_data: dict, skor_sugeno: float):
 import pandas as pd
 import os
 
-def _bersihkan_data(path='train.csv', n_sampel=500, seed=42):
+def _bersihkan_data(path='train.csv', n_sampel=60000, seed=42):
     """
-    Memuat train.csv, melakukan data cleaning, dan mengembalikan sampel acak.
+    Memuat train.csv, melakukan data cleaning lengkap, dan mengembalikan sampel acak.
     Mengembalikan DataFrame siap pakai atau None jika file tidak ditemukan.
     """
     if not os.path.exists(path):
@@ -739,6 +761,21 @@ def _bersihkan_data(path='train.csv', n_sampel=500, seed=42):
 
     # Filter hanya label yang valid
     df = df[df['Credit_Score'].isin(['Poor', 'Standard', 'Good'])]
+
+    # Buang duplikat
+    df.drop_duplicates(inplace=True)
+
+    # Outlier
+    df = df[
+        (df['Annual_Income'] >= 0) &
+        (df['Annual_Income'] <= 1500000) &
+        (df['Outstanding_Debt'] >= 0) &
+        (df['Interest_Rate'] >= 0) &
+        (df['Interest_Rate'] <= 35) &
+        (df['Delay_from_due_date'] >= 0) &
+        (df['Num_of_Delayed_Payment'] >= 0)
+    ]
+
     if len(df) < n_sampel:
         n_sampel = len(df)
 
@@ -760,7 +797,7 @@ def _label_ke_numerik(label):
     return {'Poor': 15.0, 'Standard': 50.0, 'Good': 90.0}.get(label, 50.0)
 
 
-def evaluasi_batch(path='train.csv', n_sampel=500, resolusi_mamdani=100):
+def evaluasi_batch(path='train.csv', n_sampel=60000, resolusi_mamdani=100):
     """
     Menjalankan kedua metode fuzzy pada n_sampel data dari dataset,
     lalu menghitung Akurasi, MAE, dan MSE dibandingkan ground truth Credit_Score.
@@ -816,7 +853,7 @@ def evaluasi_batch(path='train.csv', n_sampel=500, resolusi_mamdani=100):
         },
     }
 
-    # ── Inferensi Vectorized (15 aturan) ──────────────────────────────────────
+    # ── Inferensi Vectorized (34 aturan) ──────────────────────────────────────
     def vmin(*arrs): return np.minimum.reduce(arrs)
     def vmax(*arrs): return np.maximum.reduce(arrs)
 
@@ -824,21 +861,42 @@ def evaluasi_batch(path='train.csv', n_sampel=500, resolusi_mamdani=100):
     r02 = vmin(fz_v['inc']['Tinggi'],  fz_v['debt']['Sedang'],  fz_v['ir']['Sedang'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
     r03 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedikit'], fz_v['ir']['Rendah'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
     r04 = vmin(fz_v['inc']['Tinggi'],  fz_v['debt']['Sedikit'], fz_v['ir']['Tinggi'], fz_v['del']['Sedang'],  fz_v['num']['Jarang'])
+    r16 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedikit'], fz_v['ir']['Sedang'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
+    r17 = vmin(fz_v['inc']['Tinggi'],  fz_v['debt']['Sedang'],  fz_v['ir']['Rendah'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
+    r23 = vmin(fz_v['inc']['Tinggi'],  fz_v['debt']['Sedikit'], fz_v['ir']['Sedang'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
+    r24 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedang'],  fz_v['ir']['Rendah'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
+    
     r05 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedang'],  fz_v['ir']['Sedang'], fz_v['del']['Sedang'],  fz_v['num']['Sering'])
     r06 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedikit'], fz_v['ir']['Rendah'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
     r07 = vmin(fz_v['inc']['Tinggi'],  fz_v['debt']['Banyak'],  fz_v['ir']['Sedang'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
     r08 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Banyak'],  fz_v['ir']['Tinggi'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
     r09 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedang'],  fz_v['ir']['Rendah'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
     r10 = vmin(fz_v['inc']['Tinggi'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Sedang'],  fz_v['num']['Sering'])
+    r18 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedang'],  fz_v['ir']['Sedang'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
+    r19 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedikit'], fz_v['ir']['Sedang'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
+    r20 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Singkat'], fz_v['num']['Jarang'])
+    r33 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedikit'], fz_v['ir']['Sedang'], fz_v['del']['Singkat'], fz_v['num']['Sering'])
+    r34 = vmin(fz_v['inc']['Tinggi'],  fz_v['debt']['Sedikit'], fz_v['ir']['Sedang'], fz_v['del']['Singkat'], fz_v['num']['Sering'])
+    
     r11 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Banyak'],  fz_v['ir']['Tinggi'], fz_v['del']['Lama'],    fz_v['num']['SgtSering'])
     r12 = vmin(fz_v['inc']['Tinggi'],  fz_v['debt']['Banyak'],  fz_v['ir']['Tinggi'], fz_v['del']['Lama'],    fz_v['num']['SgtSering'])
     r13 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Banyak'],  fz_v['ir']['Sedang'], fz_v['del']['Sedang'],  fz_v['num']['Sering'])
     r14 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedang'],  fz_v['ir']['Sedang'], fz_v['del']['Lama'],    fz_v['num']['Sering'])
     r15 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedikit'], fz_v['ir']['Tinggi'], fz_v['del']['Lama'],    fz_v['num']['SgtSering'])
+    r21 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Sedang'],  fz_v['num']['Sering'])
+    r22 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Banyak'],  fz_v['ir']['Tinggi'], fz_v['del']['Lama'],    fz_v['num']['Sering'])
+    r25 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Lama'],    fz_v['num']['Sering'])
+    r26 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Sedang'],  fz_v['num']['SgtSering'])
+    r27 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Lama'],    fz_v['num']['SgtSering'])
+    r28 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Sedang'],  fz_v['num']['Sering'])
+    r29 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Lama'],    fz_v['num']['Jarang'])
+    r30 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedang'],  fz_v['ir']['Tinggi'], fz_v['del']['Singkat'], fz_v['num']['Sering'])
+    r31 = vmin(fz_v['inc']['Rendah'],  fz_v['debt']['Sedikit'], fz_v['ir']['Tinggi'], fz_v['del']['Lama'],    fz_v['num']['Sering'])
+    r32 = vmin(fz_v['inc']['Sedang'],  fz_v['debt']['Sedang'],  fz_v['ir']['Sedang'], fz_v['del']['Lama'],    fz_v['num']['SgtSering'])
 
-    u_baik_v    = vmax(r01, r02, r03, r04)
-    u_standar_v = vmax(r05, r06, r07, r08, r09, r10)
-    u_buruk_v   = vmax(r11, r12, r13, r14, r15)
+    u_baik_v    = vmax(r01, r02, r03, r04, r16, r17, r23, r24)
+    u_standar_v = vmax(r05, r06, r07, r08, r09, r10, r18, r19, r20, r33, r34)
+    u_buruk_v   = vmax(r11, r12, r13, r14, r15, r21, r22, r25, r26, r27, r28, r29, r30, r31, r32)
 
     # ── Defuzzifikasi Sugeno Vectorized ───────────────────────────────────────
     total_v = u_baik_v + u_standar_v + u_buruk_v
@@ -847,24 +905,18 @@ def evaluasi_batch(path='train.csv', n_sampel=500, resolusi_mamdani=100):
         (u_baik_v * 90 + u_standar_v * 50 + u_buruk_v * 15) / np.where(total_v == 0, 1, total_v)
     )
 
-    # ── Defuzzifikasi Mamdani (loop per baris, numpy tetap cepat) ─────────────
+    # ── Defuzzifikasi Mamdani Vectorized ──────────────────────────────────────
     x_out = np.linspace(0, 100, resolusi_mamdani)
     mf_baik    = fungsi_trapesium(x_out, 70, 85, 100, 100)
     mf_standar = fungsi_segitiga( x_out, 30, 50, 75)
     mf_buruk   = fungsi_trapesium(x_out, 0, 0, 25, 45)
 
-    for i in range(len(df)):
-        ub, us, ubr = u_baik_v[i], u_standar_v[i], u_buruk_v[i]
-        if ub == us == ubr == 0.0:
-            pred_m_skor[i] = 50.0
-            continue
-        mu = np.maximum(np.maximum(
-            np.minimum(ub,  mf_baik),
-            np.minimum(us,  mf_standar)),
-            np.minimum(ubr, mf_buruk)
-        )
-        den = mu.sum()
-        pred_m_skor[i] = float(np.dot(x_out, mu) / den) if den > 0 else 50.0
+    mu_b = np.minimum(u_baik_v[:, np.newaxis], mf_baik)
+    mu_s = np.minimum(u_standar_v[:, np.newaxis], mf_standar)
+    mu_r = np.minimum(u_buruk_v[:, np.newaxis], mf_buruk)
+    mu_vec = np.maximum(np.maximum(mu_b, mu_s), mu_r)
+    den_vec = mu_vec.sum(axis=1)
+    pred_m_skor = np.where(den_vec == 0, 50.0, np.dot(mu_vec, x_out) / np.where(den_vec == 0, 1.0, den_vec))
 
     # ── Konversi skor ke label & kelas numerik ────────────────────────────────
     pred_m_label = np.array([_skor_ke_kategori_label(s) for s in pred_m_skor])
@@ -1176,7 +1228,7 @@ if __name__ == "__main__":
 
     # ── FITUR 3: Evaluasi Performa Batch (wajib rubrik) ───────────────────────
     print("\n[3/5] Menjalankan Evaluasi Batch pada Dataset...")
-    hasil_eval = evaluasi_batch(path='train.csv', n_sampel=500)
+    hasil_eval = evaluasi_batch(path='train.csv', n_sampel=60000)
     cetak_metrik_evaluasi(hasil_eval)
     plot_evaluasi_performa(hasil_eval)
 

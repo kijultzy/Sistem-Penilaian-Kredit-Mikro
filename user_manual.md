@@ -44,7 +44,9 @@ Browser otomatis terbuka di **http://localhost:8501**
 
 ### AREA 1: Sidebar Kiri — Input Data Nasabah
 
-Semua input ada di **panel kiri**. Geser slider atau ketik langsung nilainya.
+Semua input berada di **panel kiri (sidebar)**. 
+* Jika panel kiri tertutup (terutama pada layar berukuran kecil/narrow), Anda dapat menekan tombol **"Buka Panel Input"** 📂 di header bagian atas halaman untuk membukanya secara otomatis tanpa reload halaman.
+* Geser slider atau ketik langsung nilainya.
 
 ```
 ╔══════════════════════════════╗
@@ -132,11 +134,11 @@ Ini menampilkan **hasil agregasi MAX** dari semua aturan fuzzy:
 - Nilai 0.0 = tidak ada aturan yang mendukung kategori ini
 - Nilai 1.0 = minimal satu aturan aktif dengan kekuatan penuh
 
-**Klik expander "Lihat Rincian 22 Basis Aturan Fuzzy"** untuk melihat:
+**Klik expander "Lihat Rincian 34 Basis Aturan Fuzzy"** untuk melihat:
 
 | Kolom | Penjelasan |
 |---|---|
-| **No.** | Nomor aturan (R01–R22) |
+| **No.** | Nomor aturan (R01–R34) |
 | **Deskripsi Aturan** | Kondisi anteseden dan konsekuensi |
 | **Firing Strength** | Nilai MIN dari semua anteseden (0.0 – 1.0) |
 | **Konsekuensi** | Hasil: BAIK / STANDAR / BURUK |
@@ -278,7 +280,7 @@ Frekuensi      : 20 kali
 - Set ke **Skenario C** → Screenshot kotak merah DITOLAK
 
 ### 2. Screenshot Tabel Aturan Aktif
-- Set Skenario A → Klik expander 22 Aturan → Screenshot (cari baris ✅)
+- Set Skenario A → Klik expander 34 Aturan → Screenshot (cari baris ✅)
 - Tampilkan bahwa ada rule yang aktif dengan firing strength > 0
 
 ### 3. Screenshot Fungsi Keanggotaan
@@ -311,7 +313,7 @@ Frekuensi      : 20 kali
 | Kriteria Rubrik | Fitur di app.py | Lokasi |
 |---|---|---|
 | Fuzzifikasi (Segitiga+Trapesium) | Tabel Fuzzifikasi | Area 5 |
-| 22 Basis Aturan (MIN/AND) | Tabel 22 Aturan | Area 4 → Expander |
+| 34 Basis Aturan (MIN/AND) | Tabel 34 Aturan | Area 4 → Expander |
 | Defuzzifikasi Mamdani (Centroid) | Skor Mamdani | Area 3 |
 | Defuzzifikasi Sugeno (Weighted Avg) | Skor Sugeno | Area 3 |
 | Perbandingan Mamdani vs Sugeno | Waktu + Akurasi | Area 3 + Area 8 |
