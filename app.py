@@ -17,6 +17,21 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
 
+plt.rcParams.update({
+    'font.family': 'DejaVu Sans',
+    'figure.facecolor': '#FFFFFF',
+    'axes.facecolor': '#F8FAFC',
+    'axes.edgecolor': '#E2E8F0',
+    'axes.labelcolor': '#475569',
+    'xtick.color': '#64748B',
+    'ytick.color': '#64748B',
+    'grid.color': '#E2E8F0',
+    'grid.alpha': 0.6,
+    'text.color': '#0F172A',
+    'axes.spines.top': False,
+    'axes.spines.right': False,
+})
+
 # Supresi seluruh warning dari Scikit-Learn dan Pandas agar UI bersih
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -29,17 +44,218 @@ from sklearn.neural_network import MLPClassifier
 # ─── Konfigurasi Halaman ──────────────────────────────────────────────────────
 st.set_page_config(
     page_title="SPK Kredit Mikro",
-    page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-st.title("🛡️ SPK Kelayakan Kredit Mikro (Mamdani vs Sugeno)")
-st.subheader("Integrasi Hibrida: Regresi Linear (ML) + ANN (DL) + Logika Fuzzy")
-st.caption(
-    "⚠️ Pengambilan keputusan akhir **sepenuhnya** ditentukan oleh Logika Fuzzy. "
-    "Prediksi ML & DL hanya bersifat informasi pendukung."
-)
+
+st.markdown("""
+<style>
+/* ── Import Font ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Root Variables ──────────────────────────────────────── */
+:root {
+  --bg-page:       #F0F2F7;
+  --bg-card:       #FFFFFF;
+  --bg-sidebar:    #FFFFFF;
+  --color-primary: #2563EB;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger:  #EF4444;
+  --color-text:    #0F172A;
+  --color-muted:   #64748B;
+  --color-border:  #E2E8F0;
+  --grad-coral:    linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  --grad-teal:     linear-gradient(135deg, #4ECDC4 0%, #44A8B3 100%);
+  --grad-blue:     linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  --radius-card:   16px;
+  --radius-badge:  8px;
+  --shadow-card:   0 2px 12px rgba(0,0,0,0.07);
+  --shadow-hover:  0 8px 30px rgba(0,0,0,0.12);
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ── Global Reset ────────────────────────────────────────── */
+.stApp {
+  background-color: var(--bg-page) !important;
+  font-family: 'Outfit', sans-serif !important;
+}
+[data-testid="stSidebar"] {
+  background-color: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--color-border) !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+  padding-top: 1.5rem;
+}
+
+/* ── Hide default Streamlit elements ─────────────────────── */
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 1.5rem !important; padding-bottom: 2rem !important; }
+
+/* ── Metric cards overrides ──────────────────────────────── */
+[data-testid="stMetric"] {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: 1.2rem 1.4rem;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border);
+}
+[data-testid="stMetricLabel"] { color: var(--color-muted) !important; font-size: 0.78rem !important; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+[data-testid="stMetricValue"] { color: var(--color-text) !important; font-size: 1.6rem !important; font-weight: 700; }
+
+/* ── Expander styling ────────────────────────────────────── */
+[data-testid="stExpander"] {
+  background: var(--bg-card);
+  border-radius: var(--radius-card) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+[data-testid="stExpander"] summary {
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  padding: 1rem 1.2rem !important;
+}
+
+/* ── Dataframe styling ───────────────────────────────────── */
+[data-testid="stDataFrame"] {
+  border-radius: var(--radius-badge) !important;
+  overflow: hidden;
+  border: 1px solid var(--color-border) !important;
+}
+
+/* ── Info/Success/Warning/Error boxes ────────────────────── */
+[data-testid="stAlert"] {
+  border-radius: var(--radius-badge) !important;
+  border-width: 1px !important;
+}
+
+/* ── Sidebar labels ──────────────────────────────────────── */
+[data-testid="stSidebar"] label {
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: var(--color-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+[data-testid="stSidebar"] .stSlider > div { padding-top: 0.2rem; }
+
+/* ── Spinner ─────────────────────────────────────────────── */
+[data-testid="stSpinner"] { color: var(--color-primary) !important; }
+
+/* ── Divider ─────────────────────────────────────────────── */
+hr { border-color: var(--color-border) !important; margin: 1.5rem 0 !important; }
+</style>
+""", unsafe_allow_html=True)
+
+def card_keputusan(skor: float, label: str, kategori: str) -> str:
+    if kategori == "BAIK":
+        grad = "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+        icon = "✓"
+        judul = "KREDIT DISETUJUI"
+    elif kategori == "STANDAR":
+        grad = "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+        icon = "◐"
+        judul = "PERLU EVALUASI LEBIH LANJUT"
+    else:
+        grad = "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)"
+        icon = "✕"
+        judul = "KREDIT DITOLAK"
+
+    return f"""
+    <div style="
+        background: {grad};
+        border-radius: 20px;
+        padding: 2rem 2.4rem;
+        color: white;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    ">
+        <div style="
+            width: 64px; height: 64px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 800; flex-shrink: 0;
+        ">{icon}</div>
+        <div>
+            <div style="font-size: 0.78rem; font-weight: 600; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem;">
+                Keputusan Sistem Fuzzy
+            </div>
+            <div style="font-size: 1.6rem; font-weight: 800; line-height: 1.1; margin-bottom: 0.3rem;">
+                {judul}
+            </div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">
+                Skor Mamdani: <strong>{skor:.2f}</strong> / 100 &nbsp;·&nbsp; Kategori: <strong>{kategori}</strong>
+            </div>
+        </div>
+    </div>
+    """
+
+def stat_card(icon: str, label: str, value: str, sub: str = "", grad: str = "") -> str:
+    bg = f"background: {grad};" if grad else "background: #FFFFFF;"
+    txt_color = "color: white;" if grad else "color: #0F172A;"
+    sub_color = "color: rgba(255,255,255,0.8);" if grad else "color: #64748B;"
+    lbl_color = "color: rgba(255,255,255,0.7);" if grad else "color: #64748B;"
+    return f"""
+    <div style="
+        {bg} border-radius: 16px;
+        padding: 1.3rem 1.4rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        border: 1px solid {'transparent' if grad else '#E2E8F0'};
+        height: 100%;
+    ">
+        <div style="font-size: 1.4rem; margin-bottom: 0.5rem;">{icon}</div>
+        <div style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; {lbl_color} margin-bottom: 0.2rem;">
+            {label}
+        </div>
+        <div style="font-size: 1.65rem; font-weight: 800; {txt_color} line-height: 1.1;">
+            {value}
+        </div>
+        {f'<div style="font-size: 0.78rem; margin-top: 0.3rem; {sub_color}">{sub}</div>' if sub else ''}
+    </div>
+    """
+
+def section_header(title: str, subtitle: str = "") -> str:
+    return f"""
+    <div style="margin: 1.8rem 0 1rem 0;">
+        <div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.2;">
+            {title}
+        </div>
+        {f'<div style="font-size: 0.82rem; color: #64748B; margin-top: 0.2rem;">{subtitle}</div>' if subtitle else ''}
+    </div>
+    """
+
+def badge(text: str, tipe: str = "neutral") -> str:
+    palettes = {
+        "success": ("rgba(16,185,129,0.12)", "#059669"),
+        "warning": ("rgba(245,158,11,0.12)", "#D97706"),
+        "danger":  ("rgba(239,68,68,0.12)",  "#DC2626"),
+        "info":    ("rgba(37,99,235,0.12)",   "#2563EB"),
+        "neutral": ("#F1F5F9",                "#475569"),
+    }
+    bg, fg = palettes.get(tipe, palettes["neutral"])
+    return f'<span style="background: {bg}; color: {fg}; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.7rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em;">{text}</span>'
+
+def progress_bar(label: str, value: float, color: str = "#2563EB") -> str:
+    pct = min(max(value * 100, 0), 100)
+    return f"""
+    <div style="margin-bottom: 0.8rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+            <span style="font-size: 0.82rem; font-weight: 600; color: #0F172A;">{label}</span>
+            <span style="font-size: 0.82rem; color: #64748B;">{value:.4f}</span>
+        </div>
+        <div style="background: #E2E8F0; border-radius: 999px; height: 8px; overflow: hidden;">
+            <div style="background: {color}; width: {pct:.1f}%; height: 100%; border-radius: 999px;
+                        transition: width 0.4s ease;"></div>
+        </div>
+    </div>
+    """
+
 
 # ─── Preprocessing & Pelatihan Model (Di-cache agar hanya sekali dijalankan) ──
 @st.cache_resource(show_spinner=False)
@@ -122,10 +338,10 @@ def muat_dan_latih():
     return model_lr, model_dl, scaler, kolom_fitur
 
 
-with st.spinner("⏳ Memuat & melatih model ML dan DL dari data historis... Mohon tunggu."):
+with st.spinner("Memuat & melatih model ML dan DL dari data historis... Mohon tunggu."):
     model_lr, model_dl, scaler, KOLOM_FITUR = muat_dan_latih()
 
-st.success("✅ Model berhasil dimuat dan siap digunakan.")
+st.success("Model berhasil dimuat dan siap digunakan.")
 
 # ─── Fungsi Keanggotaan Fuzzy (from scratch, NumPy) ───────────────────────────
 
@@ -150,26 +366,72 @@ def trapesium(x: float, a: float, b: float, c: float, d: float) -> float:
 
 
 # ─── Sidebar: Input Data Nasabah ──────────────────────────────────────────────
-st.sidebar.header("📥 Input Data Nasabah")
-st.sidebar.markdown("---")
+# ── Sidebar Header ────────────────────────────────────────────────────────────
+st.sidebar.markdown("""
+<div style="padding: 0.5rem 0 1.2rem 0; border-bottom: 1px solid #E2E8F0; margin-bottom: 1.2rem;">
+    <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.3rem;">
+        <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #2563EB, #7C3AED);
+                    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+                    font-size: 1.1rem;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div>
+            <div style="font-size: 0.95rem; font-weight: 700; color: #0F172A;">SPK Kredit Mikro</div>
+            <div style="font-size: 0.7rem; color: #64748B;">Fuzzy + ML + DL System</div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.sidebar.markdown("""
+<div style="font-size: 0.7rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;
+            letter-spacing: 0.08em; margin-bottom: 0.8rem;">
+    Profil Nasabah
+</div>
+""", unsafe_allow_html=True)
 
 pendapatan = st.sidebar.number_input(
-    "Pendapatan Tahunan (Annual Income, $)", min_value=0, value=45_000, step=1_000
+    "Pendapatan Tahunan ($)", min_value=0, value=45_000, step=1_000,
+    help="Annual Income nasabah dalam USD per tahun"
 )
 utang = st.sidebar.number_input(
-    "Utang Beredar (Outstanding Debt, $)", min_value=0, value=1_500, step=100
-)
-suku_bunga = st.sidebar.slider(
-    "Suku Bunga (Interest Rate, %)", min_value=1, max_value=35, value=12
-)
-keterlambatan_hari = st.sidebar.slider(
-    "Keterlambatan dari Jatuh Tempo (Hari)", min_value=0, max_value=60, value=15
-)
-jumlah_terlambat = st.sidebar.slider(
-    "Jumlah Pembayaran Terlambat (Kali)", min_value=0, max_value=25, value=4
+    "Utang Beredar ($)", min_value=0, value=1_500, step=100,
+    help="Total outstanding debt saat ini"
 )
 
-st.sidebar.markdown("---")
+st.sidebar.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
+
+suku_bunga = st.sidebar.slider("Suku Bunga (%)", min_value=1, max_value=35, value=12)
+keterlambatan_hari = st.sidebar.slider("Keterlambatan (Hari)", min_value=0, max_value=60, value=15)
+jumlah_terlambat = st.sidebar.slider("Frekuensi Terlambat (Kali)", min_value=0, max_value=25, value=4)
+
+st.sidebar.markdown("<hr style='margin: 1rem 0; border-color: #E2E8F0;'>", unsafe_allow_html=True)
+st.sidebar.markdown(f"""
+<div style="background: #F8FAFC; border-radius: 12px; padding: 0.9rem 1rem; border: 1px solid #E2E8F0;">
+    <div style="font-size: 0.7rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;
+                letter-spacing: 0.06em; margin-bottom: 0.7rem;">Ringkasan Input</div>
+    <div style="display: grid; gap: 0.4rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <span style="color: #64748B;">Pendapatan</span>
+            <span style="font-weight: 600; color: #0F172A;">${pendapatan:,.0f}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <span style="color: #64748B;">Utang</span>
+            <span style="font-weight: 600; color: #0F172A;">${utang:,.0f}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <span style="color: #64748B;">Suku Bunga</span>
+            <span style="font-weight: 600; color: #0F172A;">{suku_bunga}%</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <span style="color: #64748B;">Keterlambatan</span>
+            <span style="font-weight: 600; color: #0F172A;">{keterlambatan_hari} hari</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <span style="color: #64748B;">Frekuensi Telat</span>
+            <span style="font-weight: 600; color: #0F172A;">{jumlah_terlambat}x</span>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ─── Fuzzifikasi ──────────────────────────────────────────────────────────────
 # Variabel INPUT → himpunan fuzzy
@@ -325,7 +587,7 @@ def buat_chart_mf(
     fig, axes = plt.subplots(2, 3, figsize=(15, 6.5))
     fig.patch.set_facecolor('#FFFFFF')
 
-    CLR = ['#EF5350', '#FFA726', '#26A69A']   # Merah, Oranye, Teal
+    CLR = ['#EF4444', '#F59E0B', '#10B981']   # Merah, Oranye, Teal
 
     def _panel(ax, val, title, xlabel, x_range, kurva, fz_keys, xfmt):
         ax.set_facecolor('#F8F9FA')
@@ -335,7 +597,7 @@ def buat_chart_mf(
             ax.plot(x, y, color=clr, lw=2.0, label=lbl)
             ax.fill_between(x, y, alpha=0.10, color=clr)
         # Garis vertikal nilai saat ini
-        ax.axvline(val, color='#222222', lw=1.8, ls='--', zorder=5, label='Nilai Input')
+        ax.axvline(val, color='#2563EB', lw=2.0, ls='--', zorder=5, label='Nilai Input')
         # Anotasi derajat keanggotaan
         mu_lines = []
         for vk, sk in fz_keys:
@@ -409,9 +671,7 @@ def buat_chart_mf(
              bbox=dict(boxstyle='round,pad=0.8', facecolor='#F0F4F8',
                        edgecolor='#BBBBBB', alpha=0.9))
 
-    fig.suptitle('Visualisasi Fungsi Keanggotaan — Posisi Input Saat Ini',
-                 fontsize=12, fontweight='bold', color='#1C1C1C', y=1.01)
-    plt.tight_layout(pad=1.5)
+    plt.tight_layout(pad=2.0)
     return fig
 
 
@@ -563,60 +823,130 @@ else:
     label_ml = "Buruk"
 
 # ─── Antarmuka Utama (UI) ─────────────────────────────────────────────────────
-st.markdown("---")
-st.header("📊 Hasil Analisis Sistem Pendukung Keputusan")
 
-# --- Keputusan Utama Fuzzy ---
-st.subheader("🎯 Keputusan Utama Berdasarkan Logika Fuzzy")
+# ── Page Header ───────────────────────────────────────────────────────────────
+st.markdown("""
+<div style="display: flex; align-items: flex-start; justify-content: space-between;
+            margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <div style="font-size: 1.6rem; font-weight: 800; color: #0F172A; line-height: 1.2;">
+            Analisis Kelayakan Kredit
+        </div>
+        <div style="font-size: 0.85rem; color: #64748B; margin-top: 0.3rem;">
+            Sistem Pendukung Keputusan berbasis Fuzzy Logic Mamdani–Sugeno · ML · Deep Learning
+        </div>
+    </div>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+        <span style="background: rgba(16,185,129,0.1); color: #059669; font-size: 0.72rem;
+                     font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 999px;
+                     text-transform: uppercase; letter-spacing: 0.04em;">
+            ● Model Aktif
+        </span>
+        <span style="background: rgba(37,99,235,0.1); color: #2563EB; font-size: 0.72rem;
+                     font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 999px;
+                     text-transform: uppercase; letter-spacing: 0.04em;">
+            From Scratch
+        </span>
+        <span style="background: rgba(124,58,237,0.1); color: #7C3AED; font-size: 0.72rem;
+                     font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 999px;
+                     text-transform: uppercase; letter-spacing: 0.04em;">
+            22 Rules
+        </span>
+    </div>
+</div>
+<hr style="border: none; border-top: 1px solid #E2E8F0; margin-bottom: 1.5rem;">
+""", unsafe_allow_html=True)
 
 if skor_sugeno >= 70:
-    st.success("🟢 **DISETUJUI — Kredit Layak (BAIK)**")
+    kategori_final = "BAIK"
 elif skor_sugeno >= 40:
-    st.warning("🟡 **PERTIMBANGAN — Perlu Evaluasi Lebih Lanjut (STANDAR)**")
+    kategori_final = "STANDAR"
 else:
-    st.error("🔴 **DITOLAK — Kredit Tidak Layak (BURUK)**")
+    kategori_final = "BURUK"
 
-st.markdown("---")
+st.markdown(card_keputusan(skor_mamdani, "Mamdani", kategori_final), unsafe_allow_html=True)
 
-# --- Perbandingan Skor Fuzzy ---
-st.subheader("📐 Perbandingan Metode Defuzzifikasi Fuzzy")
-kol_m, kol_s = st.columns(2)
 
-with kol_m:
-    st.metric(
-        label="Skor Mamdani (Centroid / Integrasi)",
-        value=f"{skor_mamdani:.4f}",
-        help="Defuzzifikasi menggunakan metode Centroid dengan integrasi numerik (resolusi 200 titik).",
+st.markdown(section_header(
+    "Perbandingan Metode Defuzzifikasi",
+    "Mamdani (Centroid) vs Sugeno (Weighted Average) — dijalankan paralel"
+), unsafe_allow_html=True)
+
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    st.markdown(stat_card(
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/></svg>', 'Skor Mamdani',
+        f"{skor_mamdani:.2f}",
+        sub=f"⏱ {waktu_mamdani_ms:.3f} ms",
+        grad="linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)"
+    ), unsafe_allow_html=True)
+with c2:
+    st.markdown(stat_card(
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>', 'Skor Sugeno',
+        f"{skor_sugeno:.2f}",
+        sub=f"⏱ {waktu_sugeno_ms:.4f} ms",
+        grad="linear-gradient(135deg, #4ECDC4 0%, #44A8B3 100%)"
+    ), unsafe_allow_html=True)
+with c3:
+    selisih_skor = abs(skor_mamdani - skor_sugeno)
+    st.markdown(stat_card(
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>', 'Selisih Skor',
+        f"{selisih_skor:.2f}",
+        sub="Konsisten" if selisih_skor < 10 else "Perlu Analisis"
+    ), unsafe_allow_html=True)
+with c4:
+    speedup = waktu_mamdani_ms / waktu_sugeno_ms if waktu_sugeno_ms > 0 else 0
+    st.markdown(stat_card(
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', 'Speedup Sugeno',
+        f"{speedup:.0f}×",
+        sub="lebih cepat dari Mamdani"
+    ), unsafe_allow_html=True)
+
+
+st.markdown("<hr style='border-color: #E2E8F0; margin: 1.5rem 0;'>", unsafe_allow_html=True)
+st.markdown(section_header(
+    "Kekuatan Aturan Fuzzy",
+    "Hasil agregasi MAX dari 22 basis aturan — nilai 1.0 = aturan aktif penuh"
+), unsafe_allow_html=True)
+
+col_prog, col_detail = st.columns([1, 1])
+with col_prog:
+    st.markdown(
+        progress_bar("u_baik (Kategori BAIK)",    u_baik,    "#10B981") +
+        progress_bar("u_standar (Kategori STANDAR)", u_standar, "#F59E0B") +
+        progress_bar("u_buruk (Kategori BURUK)",  u_buruk,   "#EF4444"),
+        unsafe_allow_html=True
     )
-    st.caption(f"⏱️ Waktu komputasi: **{waktu_mamdani_ms:.4f} ms**")
+with col_detail:
+    st.markdown(f"""
+    <div style="background: #F8FAFC; border-radius: 12px; padding: 1.1rem 1.2rem;
+                border: 1px solid #E2E8F0; height: 100%;">
+        <div style="font-size: 0.75rem; font-weight: 700; color: #94A3B8;
+                    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.8rem;">
+            Ringkasan Inferensi
+        </div>
+        <div style="font-size: 0.85rem; color: #475569; line-height: 1.8;">
+            Aturan aktif: <strong style="color:#0F172A;">{sum(1 for k,_ in aturan if k > 0.001)}</strong> dari 22<br>
+            Dominan: <strong style="color:#0F172A;">{'BAIK' if u_baik >= u_standar and u_baik >= u_buruk else ('STANDAR' if u_standar >= u_buruk else 'BURUK')}</strong><br>
+            Mamdani output: <strong style="color:#FF6B6B;">{skor_mamdani:.4f}</strong><br>
+            Sugeno output: <strong style="color:#4ECDC4;">{skor_sugeno:.4f}</strong>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-with kol_s:
-    st.metric(
-        label="Skor Sugeno (Rata-Rata Terbobot)",
-        value=f"{skor_sugeno:.4f}",
-        help="Defuzzifikasi menggunakan metode Weighted Average (Sugeno Orde-0).",
-    )
-    st.caption(f"⏱️ Waktu komputasi: **{waktu_sugeno_ms:.4f} ms**")
-
-# Perbandingan waktu
-selisih_ms = abs(waktu_mamdani_ms - waktu_sugeno_ms)
-metode_lebih_cepat = "Sugeno" if waktu_sugeno_ms < waktu_mamdani_ms else "Mamdani"
-st.info(
-    f"🏁 **Komparasi Kinerja:** Metode **{metode_lebih_cepat}** lebih cepat "
-    f"dengan selisih **{selisih_ms:.4f} ms**. "
-    f"(Mamdani: {waktu_mamdani_ms:.4f} ms | Sugeno: {waktu_sugeno_ms:.4f} ms)"
-)
-
-st.markdown("---")
-
-# --- Detail Kekuatan Firing Aturan ---
-st.subheader("🔥 Detail Kekuatan Aturan Fuzzy (Firing Strength)")
-kol_b, kol_st, kol_br = st.columns(3)
-kol_b.metric("Kekuatan BAIK (u_baik)",        f"{u_baik:.4f}")
-kol_st.metric("Kekuatan STANDAR (u_standar)", f"{u_standar:.4f}")
-kol_br.metric("Kekuatan BURUK (u_buruk)",     f"{u_buruk:.4f}")
-
-with st.expander("📋 Lihat Rincian 22 Basis Aturan Fuzzy"):
+with st.expander("Rincian 22 Basis Aturan Fuzzy — Firing Strength per Rule"):
+    st.markdown(f"""
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem; flex-wrap: wrap;">
+        <span style="background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;
+                     font-size:0.75rem;font-weight:600;padding:0.25rem 0.75rem;border-radius:8px;">
+            Aktif: {sum(1 for k,_ in aturan if k > 0.001)} aturan
+        </span>
+        <span style="background:#FFF7ED;color:#9A3412;border:1px solid #FED7AA;
+                     font-size:0.75rem;font-weight:600;padding:0.25rem 0.75rem;border-radius:8px;">
+            Tidak aktif: {sum(1 for k,_ in aturan if k <= 0.001)} aturan
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
     tabel_aturan = []
     nama_aturan = [
         "R01: inc=Tinggi,  debt=Sedikit, ir=Rendah,  del=Singkat, num=Jarang    → BAIK",
@@ -648,66 +978,77 @@ with st.expander("📋 Lihat Rincian 22 Basis Aturan Fuzzy"):
             "Deskripsi Aturan": nama_aturan[i].split(": ", 1)[1],
             "Firing Strength": f"{kuat:.4f}",
             "Konsekuensi": kons.upper(),
-            "Aktif?": "✅ Ya" if kuat > 0.001 else "❌ Tidak",
+            "Aktif?": "Ya" if kuat > 0.001 else "Tidak",
         })
     st.dataframe(pd.DataFrame(tabel_aturan), width='stretch')
 
-st.markdown("---")
 
-# --- Fuzzifikasi Detail ---
-with st.expander("🔢 Lihat Nilai Fuzzifikasi per Variabel Input"):
-    for var_label, var_data in {
-        "Pendapatan Tahunan (inc)": fz["inc"],
-        "Utang Beredar (debt)": fz["debt"],
-        "Suku Bunga (ir)": fz["ir"],
-        "Keterlambatan Hari (del)": fz["del"],
-        "Jumlah Terlambat (num)": fz["num"],
-    }.items():
-        st.write(f"**{var_label}**")
-        df_fz = pd.DataFrame(
-            [(k, f"{v:.4f}") for k, v in var_data.items()],
-            columns=["Himpunan Fuzzy", "Nilai Keanggotaan (μ)"],
-        )
-        st.dataframe(df_fz, width='stretch')
+with st.expander("Nilai Fuzzifikasi per Variabel Input"):
+    cols_fz = st.columns(5)
+    var_config = [
+        ("inc",  "Pendapatan",    ["Rendah","Sedang","Tinggi"],    ["#EF4444","#F59E0B","#10B981"]),
+        ("debt", "Utang",         ["Sedikit","Sedang","Banyak"],   ["#10B981","#F59E0B","#EF4444"]),
+        ("ir",   "Suku Bunga",    ["Rendah","Sedang","Tinggi"],    ["#10B981","#F59E0B","#EF4444"]),
+        ("del",  "Keterlambatan", ["Singkat","Sedang","Lama"],     ["#10B981","#F59E0B","#EF4444"]),
+        ("num",  "Frek. Telat",   ["Jarang","Sering","SgtSering"], ["#10B981","#F59E0B","#EF4444"]),
+    ]
+    for col_ui, (var_key, var_label, himpunan_list, warna_list) in zip(cols_fz, var_config):
+        with col_ui:
+            rows_html = ""
+            for h, w in zip(himpunan_list, warna_list):
+                val = fz[var_key].get(h, 0.0)
+                pct = val * 100
+                rows_html += f"""
+                <div style="margin-bottom:0.6rem;">
+                    <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:0.2rem;">
+                        <span style="color:#475569;font-weight:500;">{h}</span>
+                        <span style="color:#0F172A;font-weight:700;">{val:.3f}</span>
+                    </div>
+                    <div style="background:#E2E8F0;border-radius:999px;height:5px;">
+                        <div style="background:{w};width:{pct:.1f}%;height:5px;border-radius:999px;"></div>
+                    </div>
+                </div>"""
+            st.markdown(f"""
+            <div style="background:#F8FAFC;border-radius:12px;padding:1rem;border:1px solid #E2E8F0;">
+                <div style="font-size:0.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase;
+                            letter-spacing:0.06em;margin-bottom:0.7rem;">{var_label}</div>
+                {rows_html}
+            </div>""", unsafe_allow_html=True)
 
-st.markdown("---")
 
-# --- Informasi Pendukung ML & DL ---
-st.subheader("ℹ️ Informasi Pendukung: Model ML & DL (Bukan Penentu Keputusan)")
-st.caption(
-    "Nilai di bawah ini hanya bersifat informatif sebagai cross-reference. "
-    "Keputusan kredit **tidak** ditentukan oleh model ini."
-)
+st.markdown("<hr style='border-color: #E2E8F0; margin: 1.5rem 0;'>", unsafe_allow_html=True)
+st.markdown(section_header(
+    "Model Pendukung — ML & Deep Learning",
+    "Informasi referensi saja · Keputusan kredit ditentukan 100% oleh Logika Fuzzy"
+), unsafe_allow_html=True)
 
-kol_ml, kol_dl1, kol_dl2, kol_dl3 = st.columns(4)
-kol_ml.metric(
-    label="🤖 Regresi Linear (ML)",
-    value=label_ml,
-    help=f"Nilai prediksi mentah: {pred_ml:.4f} (0=Buruk, 1=Standar, 2=Baik)",
-)
-kol_dl1.metric(
-    label="🧠 ANN — Prob. Buruk",
-    value=f"{prob_poor:.1f}%",
-    help="Probabilitas ANN memprediksi kredit sebagai 'Poor'.",
-)
-kol_dl2.metric(
-    label="🧠 ANN — Prob. Standar",
-    value=f"{prob_standard:.1f}%",
-    help="Probabilitas ANN memprediksi kredit sebagai 'Standard'.",
-)
-kol_dl3.metric(
-    label="🧠 ANN — Prob. Baik",
-    value=f"{prob_good:.1f}%",
-    help="Probabilitas ANN memprediksi kredit sebagai 'Good'.",
-)
+ml_col, dl1, dl2, dl3 = st.columns(4)
+with ml_col:
+    ml_color = {"Baik": "#10B981", "Standar": "#F59E0B", "Buruk": "#EF4444"}.get(label_ml, "#64748B")
+    st.markdown(stat_card('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>', 'Regresi Linear (ML)', label_ml,
+                          sub=f"Raw: {pred_ml:.3f}"), unsafe_allow_html=True)
+with dl1:
+    st.markdown(stat_card('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>', 'ANN — Prob. Buruk',  f"{prob_poor:.1f}%",    sub="Poor class"), unsafe_allow_html=True)
+with dl2:
+    st.markdown(stat_card('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>', 'ANN — Prob. Standar', f"{prob_standard:.1f}%", sub="Standard class"), unsafe_allow_html=True)
+with dl3:
+    st.markdown(stat_card('<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>', 'ANN — Prob. Baik',   f"{prob_good:.1f}%",    sub="Good class"), unsafe_allow_html=True)
+
+st.markdown("""
+<div style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 10px; padding: 0.75rem 1rem; margin-top: 0.8rem;
+            font-size: 0.8rem; color: #92400E;">
+    ⚠️ <strong>Catatan:</strong> Nilai ML & DL di atas hanya sebagai pembanding informatif.
+    Keputusan akhir sistem ditentukan sepenuhnya oleh mesin inferensi Fuzzy Logic.
+</div>
+""", unsafe_allow_html=True)
 
 # ─── Visualisasi Fungsi Keanggotaan Real-time ────────────────────────────────
-st.markdown("---")
-st.subheader("📉 Visualisasi Fungsi Keanggotaan — Posisi Input Saat Ini")
-st.caption(
-    "Grafik menampilkan kurva Segitiga & Trapesium tiap variabel input. "
-    "Garis putus-putus = posisi nilai input Anda saat ini. Tabel μ = derajat keanggotaan."
-)
+st.markdown("<hr style='border-color: #E2E8F0; margin: 1.5rem 0;'>", unsafe_allow_html=True)
+st.markdown(section_header(
+    "Kurva Fungsi Keanggotaan",
+    "Posisi nilai input saat ini ditunjukkan oleh garis putus-putus · μ(x) = derajat keanggotaan"
+), unsafe_allow_html=True)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     _fig_mf = buat_chart_mf(
@@ -718,10 +1059,7 @@ with warnings.catch_warnings():
 
 # ─── Evaluasi Performa Batch ──────────────────────────────────────────────────
 st.markdown("---")
-with st.expander(
-    "📈 Evaluasi Performa Batch — Mamdani vs Sugeno vs Ground Truth Dataset",
-    expanded=False,
-):
+with st.expander("Evaluasi Performa Batch — Ground Truth vs Prediksi Fuzzy", expanded=False):
     st.caption(
         "Evaluasi di-cache dan dijalankan SEKALI saat startup "
         f"menggunakan 300 sampel acak dari train.csv."
@@ -730,7 +1068,7 @@ with st.expander(
 
     if ev is None:
         st.warning(
-            "⚠️ File `train.csv` tidak ditemukan. "
+            "File `train.csv` tidak ditemukan. "
             "Pastikan Streamlit dijalankan dari direktori yang sama dengan train.csv."
         )
     else:
@@ -757,10 +1095,10 @@ with st.expander(
                 f"{ev['mse_s']:.4f}",           f"{ev['rmse_s']:.4f}",
             ],
             "Lebih Baik": [
-                "✅ Sugeno"  if ev['akurasi_s'] >= ev['akurasi_m'] else "✅ Mamdani",
-                "✅ Sugeno"  if ev['mae_s']     <= ev['mae_m']     else "✅ Mamdani",
-                "✅ Sugeno"  if ev['mse_s']     <= ev['mse_m']     else "✅ Mamdani",
-                "✅ Sugeno"  if ev['rmse_s']    <= ev['rmse_m']    else "✅ Mamdani",
+                "Sugeno"  if ev['akurasi_s'] >= ev['akurasi_m'] else "Mamdani",
+                "Sugeno"  if ev['mae_s']     <= ev['mae_m']     else "Mamdani",
+                "Sugeno"  if ev['mse_s']     <= ev['mse_m']     else "Mamdani",
+                "Sugeno"  if ev['rmse_s']    <= ev['rmse_m']    else "Mamdani",
             ],
         })
         st.dataframe(df_met, width='stretch', hide_index=True)
@@ -772,8 +1110,8 @@ with st.expander(
         fig_cm.patch.set_facecolor('white')
         KELAS = ev['kelas']
         for ax_i, cm_d, judul, cmp in [
-            (ax_cm[0], ev['cm_m'], f"Mamdani  (Akurasi {ev['akurasi_m']*100:.1f}%)", 'Oranges'),
-            (ax_cm[1], ev['cm_s'], f"Sugeno   (Akurasi {ev['akurasi_s']*100:.1f}%)", 'Greens'),
+            (ax_cm[0], ev['cm_m'], f"Mamdani  (Akurasi {ev['akurasi_m']*100:.1f}%)", 'RdYlGn'),
+            (ax_cm[1], ev['cm_s'], f"Sugeno   (Akurasi {ev['akurasi_s']*100:.1f}%)", 'RdYlGn'),
         ]:
             cm_n = cm_d.astype(float) / (cm_d.sum(axis=1, keepdims=True) + 1e-9)
             im = ax_i.imshow(cm_n, cmap=cmp, vmin=0, vmax=1, aspect='auto')
@@ -796,52 +1134,62 @@ with st.expander(
 
 # ─── Interpretasi Kelebihan & Kekurangan ─────────────────────────────────────
 st.markdown("---")
-with st.expander(
-    "📖 Interpretasi: Kelebihan & Kekurangan Mamdani vs Sugeno",
-    expanded=False,
-):
+with st.expander("Analisis Komparatif: Mamdani vs Sugeno", expanded=False):
     ki1, ki2 = st.columns(2)
     with ki1:
-        st.markdown("### 🟢 Fuzzy MAMDANI — Centroid")
+        st.markdown("### Fuzzy MAMDANI — Centroid")
         st.markdown("""
-**✅ Kelebihan:**
+**Kelebihan:**
 - Output berupa **nilai kontinu** → presisi lebih tinggi
 - Defuzzifikasi mudah diinterpretasikan *(luas area kurva)*
 - Sangat **sesuai** dengan desain rule linguistik
 - Representasi output **alami** menggunakan MF penuh
 
-**❌ Kekurangan:**
+**Kekurangan:**
 - Komputasi **lebih berat** *(integrasi numerik iteratif)*
 - Waktu eksekusi **lebih lama** dibanding Sugeno
 - Resolusi numerik memengaruhi presisi
 - Tidak efisien untuk sistem real-time / embedded
         """)
     with ki2:
-        st.markdown("### 🟠 Fuzzy SUGENO — Weighted Average")
+        st.markdown("### Fuzzy SUGENO — Weighted Average")
         st.markdown("""
-**✅ Kelebihan:**
+**Kelebihan:**
 - Komputasi **SANGAT cepat** *(aritmatika sederhana)*
 - Efisien untuk **dataset besar** & inferensi real-time
 - Tidak perlu fungsi keanggotaan output
 - Cocok untuk integrasi **sistem kontrol**
 
-**❌ Kekurangan:**
+**Kekurangan:**
 - Output **diskret** *(nilai singleton tetap)*
 - Kurang fleksibel jika output perlu representasi MF
 - Konstanta singleton harus ditentukan **manual**
 - Kurang "alami" dibanding output Mamdani
         """)
     st.info(
-        "💡 **Kesimpulan:** Kedua metode menghasilkan keputusan **konsisten** "
+        "**Kesimpulan:** Kedua metode menghasilkan keputusan **konsisten** "
         "(selisih skor biasanya < 5 poin). "
         "Mamdani unggul pada **presisi**, Sugeno unggul pada **kecepatan**. "
         "Dalam sistem hybrid ini keduanya berjalan **paralel** sebagai cross-validation."
     )
 
-# ─── Footer ───────────────────────────────────────────────────────────────────
-st.markdown("---")
-st.caption(
-    "🛠️ Dikembangkan sebagai Tugas Sistem Pendukung Keputusan (SPK). "
-    "Mesin Fuzzy dibangun 100% from scratch menggunakan Python & NumPy. "
-    "Tidak menggunakan pustaka fuzzy eksternal (scikit-fuzzy, dll.)."
-)
+st.markdown("""
+<hr style="border-color: #E2E8F0; margin: 2rem 0 1rem 0;">
+<div style="display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 0.5rem;">
+    <div style="font-size: 0.75rem; color: #94A3B8;">
+        <strong style="color:#64748B;">SPK Kredit Mikro</strong> ·
+        Mesin Fuzzy 100% From Scratch · Python + NumPy
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        <span style="font-size: 0.72rem; background: #F1F5F9; color: #475569;
+                     padding: 0.2rem 0.6rem; border-radius: 6px;">Mamdani ✓</span>
+        <span style="font-size: 0.72rem; background: #F1F5F9; color: #475569;
+                     padding: 0.2rem 0.6rem; border-radius: 6px;">Sugeno ✓</span>
+        <span style="font-size: 0.72rem; background: #F1F5F9; color: #475569;
+                     padding: 0.2rem 0.6rem; border-radius: 6px;">ANN/MLP ✓</span>
+        <span style="font-size: 0.72rem; background: #F1F5F9; color: #475569;
+                     padding: 0.2rem 0.6rem; border-radius: 6px;">Regresi LR ✓</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
