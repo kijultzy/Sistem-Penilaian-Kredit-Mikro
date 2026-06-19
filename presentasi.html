@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPK Kelayakan Kredit Mikro — Fuzzy Logic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --navy:   #1a2744;
+  --blue:   #2d60c4;
+  --lblue:  #e8effe;
+  --green:  #1a8a5a;
+  --lgreen: #e6f5ee;
+  --orange: #d4600a;
+  --lorange:#fef3e8;
+  --red:    #c0392b;
+  --lred:   #fdecea;
+  --gray:   #f4f5f7;
+  --border: #d8dce6;
+  --text:   #1a1e2e;
+  --muted:  #6b7280;
+  --white:  #ffffff;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #e8ebf0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── STAGE ─────────────────────────── */
+#stage {
+  width: 960px;
+  height: 540px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* ─── SLIDE ──────────────────────────── */
+.slide {
+  position: absolute;
+  inset: 0;
+  background: var(--white);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+.slide.active { display: flex; animation: fadein .3s ease; }
+@keyframes fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ─── SIDE ACCENT BAR ─────────────────── */
+.slide-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 6px;
+}
+.bar-navy  { background: var(--navy); }
+.bar-blue  { background: var(--blue); }
+.bar-green { background: var(--green); }
+
+/* ─── SLIDE NUMBER (top-right) ────────── */
+.slide-num {
+  position: absolute;
+  top: 18px; right: 24px;
+  font-size: 11px;
+  color: var(--border);
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+/* ─── INNER PADDING ───────────────────── */
+.inner {
+  padding: 36px 44px 28px 52px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── HEADINGS ────────────────────────── */
+.slide-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 6px;
+}
+h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+.sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0;
+}
+
+/* ─── BODY TEXT & LISTS ───────────────── */
+p, li { font-size: 13px; color: var(--text); line-height: 1.65; }
+ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+ul li::before { content: '—'; margin-right: 8px; color: var(--blue); font-weight: 700; }
+ol { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+
+strong { font-weight: 700; color: var(--navy); }
+em { font-style: italic; }
+
+/* ─── CODE ────────────────────────────── */
+pre, code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  background: #f8f9fc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+pre {
+  padding: 12px 16px;
+  line-height: 1.7;
+  color: #2d3748;
+  overflow: auto;
+}
+code { padding: 1px 5px; color: var(--blue); }
+
+/* ─── LABEL / BADGE ───────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.badge-blue   { background: var(--lblue);   color: var(--blue); }
+.badge-green  { background: var(--lgreen);  color: var(--green); }
+.badge-orange { background: var(--lorange); color: var(--orange); }
+.badge-red    { background: var(--lred);    color: var(--red); }
+.badge-navy   { background: #eef0f7;        color: var(--navy); }
+
+/* ─── GRID ────────────────────────────── */
+.g2  { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; }
+.g3  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.g21 { display: grid; grid-template-columns: 2fr 1fr;     gap: 18px; }
+.g12 { display: grid; grid-template-columns: 1fr 2fr;     gap: 18px; }
+.g35 { display: grid; grid-template-columns: 3fr 5fr;     gap: 18px; }
+
+/* ─── CARD ────────────────────────────── */
+.card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: var(--white);
+}
+.card-blue   { border-left: 3px solid var(--blue);  background: var(--lblue); }
+.card-green  { border-left: 3px solid var(--green); background: var(--lgreen); }
+.card-orange { border-left: 3px solid var(--orange);background: var(--lorange); }
+.card-red    { border-left: 3px solid var(--red);   background: var(--lred); }
+.card-navy   { border-left: 3px solid var(--navy);  background: #f0f1f8; }
+.card-gray   { background: var(--gray); border-color: transparent; }
+
+.card-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.card-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.1;
+}
+.card-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* ─── TABLE ───────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  background: var(--navy);
+  color: var(--white);
+  padding: 7px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+}
+td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) td { background: #f9fafc; }
+
+/* ─── PROGRESS ────────────────────────── */
+.prog { display: flex; flex-direction: column; gap: 8px; }
+.prog-row { display: flex; flex-direction: column; gap: 3px; }
+.prog-label { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 600; color: var(--text); }
+.prog-track { height: 7px; background: #e2e5ea; border-radius: 99px; overflow: hidden; }
+.prog-fill  { height: 7px; border-radius: 99px; }
+
+/* ─── COVER specific ──────────────────── */
+.cover-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.cover-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.2;
+  margin-bottom: 10px;
+  max-width: 700px;
+}
+.cover-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 600px;
+  margin-bottom: 20px;
+}
+.tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ─── COVER accent block (right) ──────── */
+.cover-block {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 220px;
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 18px;
+}
+.cover-block-item {
+  border-top: 1px solid rgba(255,255,255,.15);
+  padding-top: 14px;
+}
+.cover-block-item:first-child { border-top: none; padding-top: 0; }
+.cb-label { font-size: 9.5px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-bottom: 3px; }
+.cb-value { font-size: 12.5px; color: white; font-weight: 600; line-height: 1.5; }
+
+/* ─── SECTION TITLE ───────────────────── */
+.sect-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+/* ─── IMG CONTAINER ───────────────────── */
+.img-box {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.img-box img { width: 100%; height: 100%; object-fit: contain; }
+
+/* ─── FLOW STEP ───────────────────────── */
+.flow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.flow-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+.flow-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.flow-connector {
+  width: 2px;
+  height: 22px;
+  background: var(--border);
+}
+.flow-text { font-size: 12px; color: var(--text); line-height: 1.5; padding-bottom: 12px; }
+.flow-text strong { color: var(--navy); }
+
+/* ─── FORMULA ─────────────────────────── */
+.formula {
+  background: #f8f9fc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--navy);
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* ─── RESULT BOX ──────────────────────── */
+.result-box {
+  border-radius: 8px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.result-box.green { background: var(--lgreen); border: 1px solid #a7d9bd; }
+.result-box.orange { background: var(--lorange); border: 1px solid #f5c9a3; }
+.result-icon { font-size: 26px; flex-shrink: 0; }
+.result-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.result-val { font-size: 20px; font-weight: 800; color: var(--navy); }
+.result-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ─── INFO NOTE ───────────────────────── */
+.note {
+  font-size: 11.5px;
+  color: var(--muted);
+  padding: 8px 12px;
+  background: var(--gray);
+  border-radius: 5px;
+  border-left: 3px solid var(--border);
+  line-height: 1.5;
+}
+
+/* ─── NUMBER HIGHLIGHT ────────────────── */
+.num-big {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1;
+}
+.num-unit { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+/* ─── NAVIGATION ──────────────────────── */
+#controls {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border-radius: 8px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.18);
+  border: 1px solid var(--border);
+}
+#controls button {
+  background: var(--gray);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  transition: background .15s;
+}
+#controls button:hover { background: var(--lblue); color: var(--blue); border-color: var(--blue); }
+#controls button:disabled { opacity: .35; cursor: default; }
+#counter { font-size: 12px; font-weight: 600; color: var(--muted); min-width: 60px; text-align: center; }
+#pbar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: var(--blue);
+  transition: width .3s;
+}
+#hint {
+  position: fixed;
+  bottom: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #aab;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+</style>
+</head>
+<body>
+
+<div id="pbar"></div>
+
+<div id="stage">
+
+<!-- ═══ SLIDE 1 — COVER ══════════════════════════════════════ -->
+<div class="slide active">
+  <div class="slide-bar bar-navy"></div>
+  <div class="slide-num">1 / 18</div>
+  <div class="inner" style="padding-right: 240px;">
+    <div style="margin-bottom: 28px;">
+      <div class="badge badge-blue" style="margin-bottom: 10px;">Tugas Besar — Desain dan Komputasi Algoritma</div>
+    </div>
+    <div class="cover-body">
+      <div class="cover-title">Sistem Pendukung Keputusan Kelayakan Kredit Mikro</div>
+      <div class="cover-desc">Berbasis Logika Fuzzy Mamdani &amp; Sugeno, terintegrasi dengan Machine Learning dan Deep Learning. Diimplementasikan 100% from scratch menggunakan Python &amp; NumPy.</div>
+      <div class="tag-row">
+        <span class="badge badge-blue">Fuzzy Mamdani</span>
+        <span class="badge badge-blue">Fuzzy Sugeno</span>
+        <span class="badge badge-navy">Regresi Linear</span>
+        <span class="badge badge-navy">ANN/MLP</span>
+        <span class="badge badge-green">Python · NumPy · Streamlit</span>
+      </div>
+    </div>
+  </div>
+  <div class="cover-block">
+    <div class="cover-block-item">
+      <div class="cb-label">Mata Kuliah</div>
+      <div class="cb-value">Desain & Komputasi Algoritma</div>
+    </div>
+    <div class="cover-block-item">
+      <div class="cb-label">Metode Utama</div>
+      <div class="cb-value">Mamdani (Centroid) & Sugeno (Weighted Avg)</div>
+    </div>
+    <div class="cover-block-item">
+      <div class="cb-label">Basis Aturan</div>
+      <div class="cb-value">34 Aturan Fuzzy IF-THEN</div>
+    </div>
+    <div class="cover-block-item">
+      <div class="cb-label">Dataset</div>
+      <div class="cb-value">train.csv · 60.000 sampel bersih</div>
+    </div>
+    <div class="cover-block-item">
+      <div class="cb-label">Semester</div>
+      <div class="cb-value">Semester 4</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 2 — LATAR BELAKANG ═══════════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-navy"></div>
+  <div class="slide-num">2 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Latar Belakang</div>
+    <h2>Mengapa Kredit Mikro Butuh SPK?</h2>
+    <div class="g2" style="flex:1; gap:20px;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="sect-title">Masalah yang Ada</div>
+        <div class="card card-red">
+          <div style="font-size:12.5px;font-weight:700;color:var(--red);margin-bottom:4px;">Penilaian Subjektif</div>
+          <p style="font-size:12px;">Penilaian kredit oleh manusia bersifat subjektif dan rentan bias — dua petugas bisa menghasilkan keputusan berbeda untuk nasabah yang sama.</p>
+        </div>
+        <div class="card card-orange">
+          <div style="font-size:12.5px;font-weight:700;color:var(--orange);margin-bottom:4px;">Data Bersifat Fuzzy / Ambigu</div>
+          <p style="font-size:12px;">Tidak ada batas tegas antara "pendapatan cukup" dan "pendapatan kurang". Data keuangan nasabah bersifat kontinu dan relatif.</p>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="sect-title">Solusi & Tujuan</div>
+        <div class="card card-green">
+          <div style="font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:4px;">Logika Fuzzy sebagai Solusi</div>
+          <p style="font-size:12px;">Mampu menangani ketidakpastian linguistik secara matematis dan transparan, menghasilkan keputusan yang konsisten dan dapat dijelaskan.</p>
+        </div>
+        <div class="card card-blue" style="margin-top:2px;">
+          <div class="sect-title" style="margin-bottom:6px;">Pertanyaan Penelitian</div>
+          <ul style="gap:5px;">
+            <li style="font-size:12px;">Bagaimana membangun SPK kredit mikro yang objektif?</li>
+            <li style="font-size:12px;">Mana yang lebih akurat: Mamdani atau Sugeno?</li>
+            <li style="font-size:12px;">Bagaimana perbandingannya dengan model ML & DL?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 3 — VARIABEL INPUT & OUTPUT ══════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-blue"></div>
+  <div class="slide-num">3 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Desain Sistem</div>
+    <h2>Variabel Input &amp; Output Fuzzy</h2>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <div class="sect-title" style="margin-bottom:8px;">5 Variabel Input (Crisp → Fuzzy)</div>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Variabel</th><th>Satuan</th><th>Himpunan Fuzzy</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><strong>Annual Income</strong> (Pendapatan)</td><td>USD / tahun</td>
+              <td><span class="badge badge-red">Rendah</span> <span class="badge badge-orange">Sedang</span> <span class="badge badge-green">Tinggi</span></td></tr>
+            <tr><td>2</td><td><strong>Outstanding Debt</strong> (Utang)</td><td>USD</td>
+              <td><span class="badge badge-green">Sedikit</span> <span class="badge badge-orange">Sedang</span> <span class="badge badge-red">Banyak</span></td></tr>
+            <tr><td>3</td><td><strong>Interest Rate</strong> (Suku Bunga)</td><td>%</td>
+              <td><span class="badge badge-green">Rendah</span> <span class="badge badge-orange">Sedang</span> <span class="badge badge-red">Tinggi</span></td></tr>
+            <tr><td>4</td><td><strong>Delay from Due Date</strong></td><td>Hari</td>
+              <td><span class="badge badge-green">Singkat</span> <span class="badge badge-orange">Sedang</span> <span class="badge badge-red">Lama</span></td></tr>
+            <tr><td>5</td><td><strong>Num of Delayed Payment</strong></td><td>Kali</td>
+              <td><span class="badge badge-green">Jarang</span> <span class="badge badge-orange">Sering</span> <span class="badge badge-red">SgtSering</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="sect-title" style="margin-bottom:8px;">Output Sistem — Skor Kelayakan Kredit (0 – 100)</div>
+        <div class="g3">
+          <div class="result-box green">
+            <div class="result-icon">✅</div>
+            <div>
+              <div class="result-label">BAIK</div>
+              <div class="result-val" style="font-size:16px;">Skor ≥ 70</div>
+              <div class="result-sub">Kredit Disetujui</div>
+            </div>
+          </div>
+          <div class="result-box orange">
+            <div class="result-icon">⚖️</div>
+            <div>
+              <div class="result-label">STANDAR</div>
+              <div class="result-val" style="font-size:16px;">40 ≤ Skor &lt; 70</div>
+              <div class="result-sub">Perlu Evaluasi Lanjut</div>
+            </div>
+          </div>
+          <div class="result-box" style="background:var(--lred);border:1px solid #f5b3ae;">
+            <div class="result-icon">❌</div>
+            <div>
+              <div class="result-label">BURUK</div>
+              <div class="result-val" style="font-size:16px;">Skor &lt; 40</div>
+              <div class="result-sub">Kredit Ditolak</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 4 — FUNGSI KEANGGOTAAN ════════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-blue"></div>
+  <div class="slide-num">4 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Fuzzifikasi</div>
+    <h2>Fungsi Keanggotaan — Trapesium &amp; Segitiga</h2>
+    <div class="g35" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <p style="font-size:12.5px;">Diimplementasikan <strong>from scratch</strong> menggunakan NumPy — tanpa library fuzzy pihak ketiga.</p>
+        <div class="card card-blue">
+          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px;">Trapesium (trapmf)</div>
+          <p style="font-size:11.5px;">Parameter: <code>a, b, c, d</code><br>Digunakan untuk himpunan <em>ekstrem</em> (kiri dan kanan). Nilai 1.0 di antara b dan c.</p>
+        </div>
+        <div class="card card-navy">
+          <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:4px;">Segitiga (trimf)</div>
+          <p style="font-size:11.5px;">Parameter: <code>a, b, c</code><br>Digunakan untuk himpunan <em>tengah</em> (moderat). Puncak tepat di b = 1.0.</p>
+        </div>
+        <pre style="font-size:10.5px;padding:10px 12px;">Pendapatan:
+  Rendah = Trap(0, 0, 30K, 50K)
+  Sedang = Segt(30K, 65K, 100K)
+  Tinggi = Trap(80K, 100K, 1.5M, 2M)</pre>
+      </div>
+      <div class="img-box">
+        <img src="fitur Kurva Fungsi Keanggotaan Input.jpg" alt="Kurva MF">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 5 — FUZZIFIKASI ════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-blue"></div>
+  <div class="slide-num">5 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Fuzzifikasi</div>
+    <h2>Konversi Nilai Crisp → Derajat Keanggotaan μ</h2>
+    <div class="g12" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <p style="font-size:12.5px;">Setiap nilai input dikonversi ke <strong>derajat keanggotaan (μ)</strong> di masing-masing himpunan. Nilainya antara 0.0 – 1.0, dan bisa berada di <strong>lebih dari satu himpunan</strong> sekaligus.</p>
+        <div class="card card-gray">
+          <div class="card-title">Contoh Input Default</div>
+          <div style="font-size:11.5px;line-height:2;font-family:'JetBrains Mono',monospace;color:var(--text);">
+            Pendapatan : $45,000<br>
+            Utang      : $1,500<br>
+            Suku Bunga : 12%<br>
+            Keterlambatan : 15 hari<br>
+            Frek. Telat   : 4 kali
+          </div>
+        </div>
+        <div class="note">Nilai μ = 1.0 berarti anggota penuh. μ = 0 berarti bukan anggota himpunan tersebut.</div>
+      </div>
+      <div class="img-box">
+        <img src="fitur Nilai Fuzzifikasi per Variabel Input.jpg" alt="Nilai Fuzzifikasi">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 6 — 34 ATURAN FUZZY ══════════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-navy"></div>
+  <div class="slide-num">6 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Rule Base</div>
+    <h2>34 Basis Aturan Fuzzy (IF-THEN)</h2>
+    <div class="g35" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="margin-bottom:4px;">
+          <div class="sect-title">Struktur Aturan</div>
+          <pre style="font-size:10.5px;padding:10px 12px;">IF inc=X AND debt=X AND ir=X
+   AND del=X AND num=X
+THEN kelayakan = BAIK/STANDAR/BURUK</pre>
+        </div>
+        <div class="g3" style="flex:0;">
+          <div class="card" style="text-align:center;padding:12px 8px;">
+            <div class="num-big" style="color:var(--green);">8</div>
+            <div class="card-sub">aturan → BAIK</div>
+          </div>
+          <div class="card" style="text-align:center;padding:12px 8px;">
+            <div class="num-big" style="color:var(--orange);">11</div>
+            <div class="card-sub">aturan → STANDAR</div>
+          </div>
+          <div class="card" style="text-align:center;padding:12px 8px;">
+            <div class="num-big" style="color:var(--red);">15</div>
+            <div class="card-sub">aturan → BURUK</div>
+          </div>
+        </div>
+        <div class="card card-gray">
+          <div class="card-title" style="margin-bottom:6px;">Inferensi: AND = MIN, Agregasi = MAX</div>
+          <p style="font-size:11.5px;">Firing strength setiap aturan = minimum dari semua derajat keanggotaan yang terlibat. Agregasi per konsekuensi mengambil nilai MAX.</p>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="fitur Rincian 34 Basis Aturan Fuzzy — Firing Strength per Rule.jpg" alt="34 Aturan Fuzzy">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 7 — INFERENSI & AGREGASI ══════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-blue"></div>
+  <div class="slide-num">7 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Proses Inferensi</div>
+    <h2>Firing Strength &amp; Agregasi MAX</h2>
+    <div class="g2" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="sect-title">Alur Evaluasi Aturan</div>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+            <div class="flow-text"><strong>Fuzzifikasi</strong> — hitung μ tiap himpunan untuk 5 variabel input</div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+            <div class="flow-text"><strong>Evaluasi 34 Aturan</strong> — firing strength = MIN semua μ yang terlibat<br><code>α = min(μ_inc, μ_debt, μ_ir, μ_del, μ_num)</code></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+            <div class="flow-text"><strong>Agregasi MAX</strong> — gabungkan aturan per konsekuensi<br><code>u_baik = max(α seluruh aturan BAIK)</code></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-line"><div class="flow-dot" style="background:var(--green);"></div></div>
+            <div class="flow-text"><strong>Kirim ke Defuzzifikasi</strong> — u_baik, u_standar, u_buruk</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="sect-title">Hasil Contoh (Input Default)</div>
+        <div class="prog">
+          <div class="prog-row">
+            <div class="prog-label"><span>u_baik — Kategori BAIK</span><span style="color:var(--green);">0.4286</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:42.86%;background:var(--green);"></div></div>
+          </div>
+          <div class="prog-row">
+            <div class="prog-label"><span>u_standar — Kategori STANDAR</span><span style="color:var(--orange);">0.3333</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:33.33%;background:var(--orange);"></div></div>
+          </div>
+          <div class="prog-row">
+            <div class="prog-label"><span>u_buruk — Kategori BURUK</span><span style="color:var(--red);">0.0000</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:0%;background:var(--red);"></div></div>
+          </div>
+        </div>
+        <div class="card card-green" style="margin-top:4px;">
+          <p style="font-size:12px;">Aturan aktif: <strong>3 dari 34</strong> &nbsp;·&nbsp; Dominan: <strong>BAIK</strong><br>u_baik paling besar → sistem condong ke "Kredit Layak"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 8 — DEFUZZIFIKASI MAMDANI ════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-blue"></div>
+  <div class="slide-num">8 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Defuzzifikasi</div>
+    <h2>Mamdani — Metode Centroid</h2>
+    <div class="g35" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <p style="font-size:12.5px;">Hitung <strong>titik pusat massa (centroid)</strong> dari fungsi agregat output hasil kombinasi semua aturan aktif.</p>
+        <div class="formula">
+          ∫ x · μ_agg(x) dx<br>
+          z* = ─────────────────<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;∫ μ_agg(x) dx
+        </div>
+        <div class="card card-gray">
+          <div class="card-title" style="margin-bottom:6px;">MF Output</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.9;color:var(--text);">
+            BAIK    = Trap(70, 85, 100, 100)<br>
+            STANDAR = Segt(30, 50, 75)<br>
+            BURUK   = Trap(0, 0, 25, 45)
+          </div>
+        </div>
+        <div class="g2" style="flex:0;gap:8px;">
+          <div class="card" style="text-align:center;padding:10px;">
+            <div class="card-title">Resolusi</div>
+            <div class="card-value" style="font-size:20px;">200 titik</div>
+            <div class="card-sub">integrasi numerik</div>
+          </div>
+          <div class="card" style="text-align:center;padding:10px;">
+            <div class="card-title">Waktu</div>
+            <div class="card-value" style="font-size:20px;">~0.922 ms</div>
+            <div class="card-sub">per inferensi</div>
+          </div>
+        </div>
+        <div class="result-box green">
+          <div class="result-icon">✅</div>
+          <div>
+            <div class="result-label">Skor Mamdani</div>
+            <div class="result-val">68.69 / 100 — BAIK</div>
+          </div>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="fitur Visualisasi Output Fuzzy Real-time.jpg" alt="Output Fuzzy">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 9 — DEFUZZIFIKASI SUGENO ═════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-blue"></div>
+  <div class="slide-num">9 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Defuzzifikasi</div>
+    <h2>Sugeno — Weighted Average</h2>
+    <div class="g2" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <p style="font-size:12.5px;">Tidak memerlukan MF output. Gunakan <strong>nilai singleton tetap</strong> (konstanta) untuk setiap konsekuensi, lalu hitung rata-rata tertimbang.</p>
+        <div class="formula" style="font-size:11px;">
+          u_baik×90 + u_standar×50 + u_buruk×15<br>
+          z* = ──────────────────────────────────────<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;u_baik + u_standar + u_buruk
+        </div>
+        <div class="card card-gray">
+          <div class="card-title" style="margin-bottom:5px;">Konstanta Singleton</div>
+          <div class="g3" style="gap:6px;">
+            <div style="text-align:center;background:var(--lgreen);border-radius:6px;padding:8px 4px;">
+              <div style="font-size:20px;font-weight:800;color:var(--green);">90</div>
+              <div style="font-size:10px;color:var(--muted);">BAIK</div>
+            </div>
+            <div style="text-align:center;background:var(--lorange);border-radius:6px;padding:8px 4px;">
+              <div style="font-size:20px;font-weight:800;color:var(--orange);">50</div>
+              <div style="font-size:10px;color:var(--muted);">STANDAR</div>
+            </div>
+            <div style="text-align:center;background:var(--lred);border-radius:6px;padding:8px 4px;">
+              <div style="font-size:20px;font-weight:800;color:var(--red);">15</div>
+              <div style="font-size:10px;color:var(--muted);">BURUK</div>
+            </div>
+          </div>
+        </div>
+        <div class="result-box green">
+          <div class="result-icon">⚡</div>
+          <div>
+            <div class="result-label">Skor Sugeno</div>
+            <div class="result-val">72.50 / 100 — BAIK</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card card-green">
+          <div class="card-title" style="margin-bottom:6px;">Komputasi Contoh (step by step)</div>
+          <pre style="font-size:10.5px;padding:10px;background:white;border:none;">= (0.4286×90 + 0.3333×50 + 0×15)
+  ─────────────────────────────────
+        (0.4286 + 0.3333 + 0)
+
+= (38.574 + 16.665 + 0) / 0.7619
+= 55.239 / 0.7619
+= <strong style="color:var(--green);">72.50</strong></pre>
+        </div>
+        <div class="g2" style="flex:0;gap:8px;">
+          <div class="card" style="text-align:center;padding:10px;">
+            <div class="card-title">Waktu Komputasi</div>
+            <div class="card-value" style="font-size:18px;color:var(--green);">~0.005 ms</div>
+          </div>
+          <div class="card card-green" style="text-align:center;padding:10px;">
+            <div class="card-title">Lebih Cepat</div>
+            <div class="card-value" style="font-size:18px;color:var(--green);">181×</div>
+            <div class="card-sub">dari Mamdani</div>
+          </div>
+        </div>
+        <div class="note">Sugeno lebih cocok untuk sistem real-time dan embedded karena hanya memerlukan operasi aritmatika sederhana — tanpa integrasi numerik.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 10 — TAMPILAN APLIKASI ═══════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-green"></div>
+  <div class="slide-num">10 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Aplikasi</div>
+    <h2>Tampilan Aplikasi SPK — Streamlit</h2>
+    <div class="img-box" style="flex:1;">
+      <img src="tampilan_awal.jpg" alt="Tampilan Awal Aplikasi">
+    </div>
+    <div class="note" style="margin-top:10px;">Keputusan sistem ditampilkan secara instan dalam bentuk banner berwarna (hijau = disetujui, kuning = evaluasi, merah = ditolak), disertai skor Mamdani &amp; Sugeno dan perbandingan waktu komputasi.</div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 11 — PERBANDINGAN MAMDANI vs SUGENO ══════════ -->
+<div class="slide">
+  <div class="slide-bar bar-blue"></div>
+  <div class="slide-num">11 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Hasil</div>
+    <h2>Perbandingan Skor Mamdani vs Sugeno</h2>
+    <div class="g2" style="flex:1;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <thead><tr><th>Aspek</th><th>Mamdani</th><th>Sugeno</th></tr></thead>
+          <tbody>
+            <tr><td>Metode</td><td>Centroid</td><td>Weighted Average</td></tr>
+            <tr><td><strong>Skor</strong></td><td><strong>68.69</strong></td><td><strong>72.50</strong></td></tr>
+            <tr><td>Waktu</td><td>~0.922 ms</td><td>~0.005 ms</td></tr>
+            <tr><td>Kecepatan relatif</td><td>Normal</td><td><strong>181× lebih cepat</strong></td></tr>
+            <tr><td>Selisih skor</td><td colspan="2" style="text-align:center;">3.81 poin — <strong>Konsisten</strong></td></tr>
+          </tbody>
+        </table>
+        <div class="card card-blue">
+          <p style="font-size:12px;"><strong>Interpretasi:</strong> Selisih &lt; 5 poin → keputusan akhir kedua metode sama: <strong>BAIK</strong>. Sistem dijalankan paralel sebagai cross-validation.</p>
+        </div>
+      </div>
+      <div class="img-box" style="align-self:stretch;">
+        <img src="tampilan_awal.jpg" alt="Tampilan Perbandingan">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 12 — ARSITEKTUR SISTEM ═══════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-navy"></div>
+  <div class="slide-num">12 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Arsitektur</div>
+    <h2>Alur Sistem SPK Kredit Mikro</h2>
+    <div class="g2" style="flex:1;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="flow">
+          <div class="flow-step"><div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+            <div class="flow-text"><strong>Input Nasabah</strong> — 5 variabel numerik dari sidebar</div></div>
+          <div class="flow-step"><div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+            <div class="flow-text"><strong>Fuzzifikasi</strong> — setiap variabel → 3 derajat keanggotaan</div></div>
+          <div class="flow-step"><div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+            <div class="flow-text"><strong>Evaluasi 34 Aturan</strong> — MIN/AND per aturan</div></div>
+          <div class="flow-step"><div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+            <div class="flow-text"><strong>Agregasi MAX</strong> → u_baik, u_standar, u_buruk</div></div>
+          <div class="flow-step"><div class="flow-line"><div class="flow-dot" style="background:#6366f1;"></div><div class="flow-connector"></div></div>
+            <div class="flow-text" style="display:flex;gap:8px;"><div><span class="badge badge-blue">Defuzz. Mamdani</span><br><span style="font-size:11px;color:var(--muted);">Centroid — 200 pts</span></div><div><span class="badge badge-navy">Defuzz. Sugeno</span><br><span style="font-size:11px;color:var(--muted);">Weighted Average</span></div></div></div>
+          <div class="flow-step"><div class="flow-line"><div class="flow-dot" style="background:var(--green);"></div></div>
+            <div class="flow-text"><strong>Keputusan Final</strong> — BAIK / STANDAR / BURUK</div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="sect-title">Stack Teknologi</div>
+        <div class="card card-gray">
+          <div class="card-title" style="margin-bottom:5px;">Backend — Fuzzy Engine</div>
+          <p style="font-size:12px;">Python 3 + NumPy · Implementasi 100% from scratch, tanpa library scikit-fuzzy</p>
+        </div>
+        <div class="card card-gray">
+          <div class="card-title" style="margin-bottom:5px;">Machine Learning</div>
+          <p style="font-size:12px;">Scikit-learn · LinearRegression, MLPClassifier, StandardScaler</p>
+        </div>
+        <div class="card card-gray">
+          <div class="card-title" style="margin-bottom:5px;">Frontend</div>
+          <p style="font-size:12px;">Streamlit · Web UI interaktif · Matplotlib charts</p>
+        </div>
+        <div class="card card-gray">
+          <div class="card-title" style="margin-bottom:5px;">Data</div>
+          <p style="font-size:12px;">train.csv · Credit Score Dataset · 60.000 baris bersih</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 13 — MODEL ML & DL ════════════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-navy"></div>
+  <div class="slide-num">13 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Model Pendukung</div>
+    <h2>Regresi Linear &amp; ANN/MLP — Referensi Informatif</h2>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+      <div class="img-box" style="flex:1;max-height:120px;">
+        <img src="fitur Model Pendukung — ML & Deep Learning.jpg" alt="Model ML DL">
+      </div>
+      <div class="g2" style="flex:0;">
+        <div class="card card-blue">
+          <div style="font-size:12.5px;font-weight:700;color:var(--blue);margin-bottom:6px;">Regresi Linear (ML)</div>
+          <ul style="gap:4px;">
+            <li style="font-size:11.5px;">5 fitur → target numerik (Poor=0, Standard=1, Good=2)</li>
+            <li style="font-size:11.5px;">Dilatih pada 80% × 60.000 sampel bersih</li>
+            <li style="font-size:11.5px;">Hasil prediksi: <strong>Standar</strong> (raw score: 0.999)</li>
+          </ul>
+        </div>
+        <div class="card card-navy">
+          <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:6px;">ANN/MLP Classifier (DL)</div>
+          <ul style="gap:4px;">
+            <li style="font-size:11.5px;">Arsitektur: 5 → 64 → 32 → 16 → 3 (ReLU + Early Stopping)</li>
+            <li style="font-size:11.5px;">Input: StandardScaler normalization</li>
+            <li style="font-size:11.5px;">Prob. Buruk: 25.7% · Standar: <strong>50.8%</strong> · Baik: 23.5%</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note">⚠️ <strong>Catatan:</strong> Nilai ML & DL di atas hanya sebagai pembanding informatif. Keputusan akhir sistem ditentukan 100% oleh mesin inferensi Fuzzy Logic.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 14 — PREPROCESSING DATA ═══════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-navy"></div>
+  <div class="slide-num">14 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Data</div>
+    <h2>Preprocessing Data — Pembersihan &amp; Seleksi Fitur</h2>
+    <div class="g2" style="flex:1;align-items:start;">
+      <div>
+        <div class="sect-title" style="margin-bottom:8px;">Langkah Preprocessing</div>
+        <ol style="gap:7px;font-size:12px;">
+          <li>Bersihkan karakter asing dari kolom numerik (regex: <code>[^\d.\-]</code>)</li>
+          <li>Clip nilai negatif → Delay &amp; Num Delayed ≥ 0</li>
+          <li>Drop baris yang mengandung NaN setelah konversi</li>
+          <li>Mapping label → Poor=0, Standard=1, Good=2</li>
+          <li>Drop duplikat</li>
+          <li>Filter outlier bisnis (Income ≤ 1.5M, Rate ≤ 35%)</li>
+          <li>Sampling 60.000 baris acak (random_state=42)</li>
+          <li>Train/Test Split → 80 : 20</li>
+        </ol>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card card-gray">
+          <div class="card-title" style="margin-bottom:6px;">Dataset</div>
+          <p style="font-size:12px;">train.csv · Credit Score Dataset · ~31 MB<br>Label: <span class="badge badge-red">Poor</span> <span class="badge badge-orange">Standard</span> <span class="badge badge-green">Good</span></p>
+        </div>
+        <div class="card card-blue">
+          <div class="card-title" style="margin-bottom:6px;">5 Fitur yang Digunakan</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.9;color:var(--text);">
+            Annual_Income<br>
+            Outstanding_Debt<br>
+            Interest_Rate<br>
+            Delay_from_due_date<br>
+            Num_of_Delayed_Payment
+          </div>
+        </div>
+        <div class="card card-green">
+          <div class="card-title" style="margin-bottom:4px;">Hasil setelah Cleaning</div>
+          <div class="card-value" style="font-size:20px;color:var(--green);">60.000 baris</div>
+          <div class="card-sub">sampel bersih siap latih</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 15 — EVALUASI BATCH ═══════════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-blue"></div>
+  <div class="slide-num">15 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Evaluasi</div>
+    <h2>Performa Batch — Ground Truth vs Prediksi Fuzzy</h2>
+    <div class="g35" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="sect-title">Hasil Evaluasi · 60.000 Sampel</div>
+        <table>
+          <thead><tr><th>Metrik</th><th>Mamdani</th><th>Sugeno</th><th>Lebih Baik</th></tr></thead>
+          <tbody>
+            <tr><td>Akurasi</td><td><strong>58.56%</strong></td><td>58.51%</td><td><span class="badge badge-green">Mamdani</span></td></tr>
+            <tr><td>MAE</td><td><strong>15.857</strong></td><td>15.935</td><td><span class="badge badge-green">Mamdani</span></td></tr>
+            <tr><td>MSE</td><td><strong>626.81</strong></td><td>634.05</td><td><span class="badge badge-green">Mamdani</span></td></tr>
+            <tr><td>RMSE</td><td><strong>25.04</strong></td><td>25.18</td><td><span class="badge badge-green">Mamdani</span></td></tr>
+          </tbody>
+        </table>
+        <div class="note" style="font-size:11.5px;">Mamdani unggul di semua metrik, namun perbedaannya sangat kecil. Keduanya kesulitan membedakan kelas Poor vs Standard — area pengembangan selanjutnya.</div>
+        <div class="card card-blue">
+          <p style="font-size:12px;">Standard class: Mamdani 80% benar · Sugeno 78% benar<br>Good class: Mamdani 22% · Sugeno 24%</p>
+        </div>
+      </div>
+      <div class="img-box">
+        <img src="fitur Evaluasi Performa Batch — Ground Truth vs Prediksi Fuzzy.jpg" alt="Evaluasi Batch">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 16 — ANALISIS KOMPARATIF ══════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-navy"></div>
+  <div class="slide-num">16 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Analisis</div>
+    <h2>Mamdani vs Sugeno — Kelebihan &amp; Kekurangan</h2>
+    <div class="g2" style="flex:1;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="card card-blue">
+          <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px;">Mamdani — Centroid</div>
+          <div class="sect-title">Kelebihan</div>
+          <ul style="gap:3px;margin-bottom:8px;">
+            <li style="font-size:11.5px;">Output kontinu → presisi lebih tinggi</li>
+            <li style="font-size:11.5px;">Defuzzifikasi mudah diinterpretasikan</li>
+            <li style="font-size:11.5px;">Sesuai desain rule linguistik</li>
+          </ul>
+          <div class="sect-title">Kekurangan</div>
+          <ul style="gap:3px;">
+            <li style="font-size:11.5px;">Komputasi berat — integrasi numerik iteratif</li>
+            <li style="font-size:11.5px;">Tidak efisien untuk real-time / embedded</li>
+          </ul>
+        </div>
+        <div class="img-box" style="flex:1;min-height:0;">
+          <img src="fitur Analisis Komparatif Mamdani vs Sugeno.jpg" alt="Komparatif">
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="card card-navy">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">Sugeno — Weighted Average</div>
+          <div class="sect-title">Kelebihan</div>
+          <ul style="gap:3px;margin-bottom:8px;">
+            <li style="font-size:11.5px;">Komputasi sangat cepat — aritmatika sederhana</li>
+            <li style="font-size:11.5px;">Efisien untuk dataset besar & real-time</li>
+            <li style="font-size:11.5px;">Tidak perlu MF output</li>
+          </ul>
+          <div class="sect-title">Kekurangan</div>
+          <ul style="gap:3px;">
+            <li style="font-size:11.5px;">Output diskret — nilai singleton tetap</li>
+            <li style="font-size:11.5px;">Konstanta singleton ditentukan manual</li>
+          </ul>
+        </div>
+        <div class="card card-green">
+          <p style="font-size:12px;"><strong>Kesimpulan:</strong> Kedua metode dijalankan paralel sebagai cross-validation. Mamdani unggul dalam <strong>presisi</strong>, Sugeno unggul dalam <strong>kecepatan</strong>. Selisih skor &lt; 5 poin → keputusan konsisten.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 17 — KESIMPULAN ════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-green"></div>
+  <div class="slide-num">17 / 18</div>
+  <div class="inner">
+    <div class="slide-tag">Kesimpulan</div>
+    <h2>Kesimpulan &amp; Rekomendasi</h2>
+    <div class="g2" style="flex:1;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="sect-title">Temuan Utama</div>
+        <div class="card card-green">
+          <ol style="gap:7px;font-size:12px;padding-left:16px;">
+            <li>SPK berhasil dibangun from scratch — Python + NumPy + Streamlit</li>
+            <li>34 basis aturan merepresentasikan skenario kredit utama</li>
+            <li>Sugeno <strong>181× lebih cepat</strong>, Mamdani sedikit lebih akurat (58.56% vs 58.51%)</li>
+            <li>Selisih skor &lt; 5 poin → keputusan kedua metode <strong>konsisten</strong></li>
+            <li>Model ML &amp; DL berfungsi sebagai pembanding, bukan penentu keputusan</li>
+          </ol>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="sect-title">Rekomendasi Pengembangan</div>
+        <ul style="font-size:12px;gap:6px;">
+          <li>Tambah jumlah aturan untuk cakupan yang lebih luas</li>
+          <li>Tuning parameter MF menggunakan Genetic Algorithm (GA) atau PSO</li>
+          <li>Integrasikan fitur tambahan (payment history, credit utilization)</li>
+          <li>Eksplorasi metode defuzzifikasi lain: MOM, SOM, FOM</li>
+        </ul>
+        <div style="margin-top:4px;">
+          <div class="sect-title" style="margin-bottom:6px;">Perbandingan Ringkas</div>
+          <table>
+            <thead><tr><th>Aspek</th><th>Mamdani</th><th>Sugeno</th></tr></thead>
+            <tbody>
+              <tr><td>Akurasi</td><td><strong>58.56%</strong></td><td>58.51%</td></tr>
+              <tr><td>Kecepatan</td><td>Normal</td><td><strong>181× lebih cepat</strong></td></tr>
+              <tr><td>Keputusan</td><td colspan="2" style="text-align:center;">Konsisten (selisih &lt;5 poin)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 18 — PENUTUP ═══════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-bar bar-navy"></div>
+  <div class="slide-num">18 / 18</div>
+  <div class="inner" style="padding-right: 240px;">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px;">
+      <div>
+        <div class="slide-tag">Penutup</div>
+        <h1>Terima Kasih!</h1>
+        <p style="font-size:13.5px;color:var(--muted);margin-top:6px;">Sistem SPK Kelayakan Kredit Mikro berbasis Fuzzy Logic Mamdani &amp; Sugeno<br>telah berhasil diimplementasikan dan siap digunakan secara interaktif.</p>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <div class="sect-title" style="margin-bottom:8px;">Kemungkinan Pertanyaan</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div class="card card-gray" style="padding:10px 14px;">
+            <p style="font-size:12px;"><strong>Mengapa akurasi hanya ~58%?</strong><br>Fuzzy logic berbasis aturan manusia, bukan di-training dari data. Parameter MF bisa dioptimasi lebih lanjut menggunakan GA atau PSO.</p>
+          </div>
+          <div class="card card-gray" style="padding:10px 14px;">
+            <p style="font-size:12px;"><strong>Mengapa 34 aturan?</strong><br>Dirancang dari kombinasi linguistik 5 variabel × 3 himpunan yang merepresentasikan skenario kredit paling umum.</p>
+          </div>
+          <div class="card card-gray" style="padding:10px 14px;">
+            <p style="font-size:12px;"><strong>Cara menjalankan aplikasi?</strong><br><code>streamlit run app.py</code> — dari direktori yang sama dengan train.csv</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cover-block">
+    <div class="cover-block-item">
+      <div class="cb-label">Akurasi Mamdani</div>
+      <div class="cb-value" style="font-size:22px;font-weight:800;">58.56%</div>
+    </div>
+    <div class="cover-block-item">
+      <div class="cb-label">Akurasi Sugeno</div>
+      <div class="cb-value" style="font-size:22px;font-weight:800;">58.51%</div>
+    </div>
+    <div class="cover-block-item">
+      <div class="cb-label">Sugeno Speedup</div>
+      <div class="cb-value" style="font-size:22px;font-weight:800;">181×</div>
+    </div>
+    <div class="cover-block-item">
+      <div class="cb-label">Basis Aturan</div>
+      <div class="cb-value" style="font-size:22px;font-weight:800;">34 Rules</div>
+    </div>
+    <div class="cover-block-item">
+      <div class="cb-label">Implementasi</div>
+      <div class="cb-value">100% From Scratch</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #stage -->
+
+<!-- ─── CONTROLS ─────────────────────────────────────────── -->
+<div id="controls">
+  <button id="btn-prev" onclick="go(-1)" disabled>← Prev</button>
+  <span id="counter">1 / 18</span>
+  <button id="btn-next" onclick="go(1)">Next →</button>
+</div>
+<div id="hint">Tekan ← → atau Space untuk navigasi</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let cur = 0;
+
+function go(d) {
+  const next = cur + d;
+  if (next < 0 || next >= total) return;
+  slides[cur].classList.remove('active');
+  cur = next;
+  slides[cur].classList.add('active');
+  refresh();
+}
+
+function refresh() {
+  document.getElementById('counter').textContent = (cur+1) + ' / ' + total;
+  document.getElementById('btn-prev').disabled = cur === 0;
+  document.getElementById('btn-next').disabled = cur === total - 1;
+  document.getElementById('pbar').style.width = ((cur+1)/total*100) + '%';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+});
+
+refresh();
+</script>
+</body>
+</html>
